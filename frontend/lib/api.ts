@@ -53,6 +53,42 @@ export type UploadResult = {
   outline: OutlineNode[];
   outline_flat: unknown[];
   references_preview: Reference[];
+  dedup: DedupInfo;
+};
+
+export type DedupCandidate = {
+  doc_id: string;
+  filename: string;
+  similarity: number;
+  title_match: boolean;
+  same_arxiv_id: boolean;
+  existing_version: number | null;
+  incoming_version: number | null;
+  existing_is_newer: boolean;
+  reason: string;
+};
+
+export type DedupInfo = {
+  has_warning: boolean;
+  threshold: number;
+  metric: string;
+  candidates: DedupCandidate[];
+  exists_newer: boolean;
+};
+
+export type VersionDiff = {
+  diff: {
+    old_label: string;
+    new_label: string;
+    text_len: { old: number; new: number; delta: number };
+    headings: { old: number; new: number; added: string[]; removed: string[] };
+    references: { old: number; new: number; added: string[]; removed: string[] };
+    changed_sections: { label: string; before: number; after: number; delta: number }[];
+    math_lines: { old: number; new: number };
+  };
+  summary: string;
+  summary_source: "llm" | "deterministic" | string;
+  fallback_summary: string;
 };
 
 export type DocumentDetail = {
@@ -111,4 +147,29 @@ export function humanSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
   return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+}
+
+export type DedupAction = "keep_both" | "replace_existing" | "discard_new";
+
+export function resolveDedup(
+  docId: string,
+  action: DedupAction,
+  targetDocId?: string,
+): Promise<{ action: string; kept: string | null; deleted: string | null }> {
+  return fetch(`${API_URL}/api/v1/documents/dedup/resolve`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ doc_id: docId, target_doc_id: targetDocId ?? null, action }),
+  }).then((r) => asJson<{ action: string; kept: string | null; deleted: string | null }>(r));
+}
+
+export function compareDocuments(
+  olderId: string,
+  newerId: string,
+  useLlm = true,
+): Promise<VersionDiff> {
+  const q = useLlm ? "" : "?use_llm=false";
+  return fetch(`${API_URL}/api/v1/documents/${olderId}/compare/${newerId}${q}`, {
+    cache: "no-store",
+  }).then((r) => asJson<VersionDiff>(r));
 }

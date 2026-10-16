@@ -166,6 +166,17 @@ def original_path(doc_id: str) -> Path | None:
     return p if p.exists() else None
 
 
+def iter_parsed() -> list[tuple[dict[str, Any], str]]:
+    """遍历全库的解析结果 ⇒ [(parsed_dict, filename)]，供 J1 去重逐篇比对。"""
+    out: list[tuple[dict[str, Any], str]] = []
+    for meta in list_documents():
+        parsed = get_parsed(meta.doc_id)
+        if parsed:
+            parsed["doc_id"] = meta.doc_id  # 便于去重结果回指来源
+            out.append((parsed, meta.filename))
+    return out
+
+
 # ---------------------------- 删除 ----------------------------
 
 

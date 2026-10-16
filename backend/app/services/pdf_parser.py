@@ -97,6 +97,7 @@ class ParsedDocument:
     title: str | None
     authors: list[str]
     abstract: str
+    full_text: str
     outline: list[Heading]
     sections: list[dict[str, Any]]
     references: list[Reference]
@@ -111,6 +112,7 @@ class ParsedDocument:
             "title": self.title,
             "authors": self.authors,
             "abstract": self.abstract,
+            "full_text": self.full_text,
             "outline": [asdict(h) for h in self.outline],
             "sections": self.sections,
             "references": [asdict(r) for r in self.references],
@@ -377,9 +379,12 @@ def parse_pdf(path: str | Path, max_pages: int | None = None) -> ParsedDocument:
     warnings: list[str] = []
 
     lines: list[Line] = []
+    pages_text: list[str] = []
     limit = min(doc.page_count, max_pages) if max_pages else doc.page_count
     for i in range(limit):
         lines.extend(_page_lines(doc[i], i + 1))
+        # 全文原文：去重（J1）与后续 RAG 切块都从这里取，不依赖标题识别是否成功
+        pages_text.append(doc[i].get_text())
 
     warnings.extend(_attach_orphan_numbers(lines))
     lines = [ln for ln in lines if ln.text.strip()]
@@ -457,6 +462,7 @@ def parse_pdf(path: str | Path, max_pages: int | None = None) -> ParsedDocument:
         title=title,
         authors=authors,
         abstract=abstract,
+        full_text="\n".join(pages_text),
         outline=outline,
         sections=sections,
         references=references,

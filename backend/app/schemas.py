@@ -51,3 +51,16 @@ class DocumentDetail(BaseModel):
     sections: list[dict]
     math_lines: list[dict]
     abstract: str
+
+
+class DedupResolveRequest(BaseModel):
+    """J1：用户在"覆盖 / 保留"之间做选择。"""
+
+    doc_id: str = Field(description="本次新上传的文档")
+    target_doc_id: str | None = Field(
+        default=None, description="预警里指出的库中已有版本（keep_both 时可省略）"
+    )
+    action: str = Field(
+        description="keep_both=两份都留；replace_existing=删掉库中旧版、留新的；"
+        "discard_new=放弃本次上传（删掉新的）"
+    )

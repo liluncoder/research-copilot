@@ -12,7 +12,7 @@
 - 小阶段目标（`路线/06`）完成一条就删一行，保持它短
 
 ## 技术选型（已定稿，勿随手换）
-Next.js 14 + TS + Tailwind + shadcn/ui ｜ FastAPI + uv + Python 3.11 ｜ LangGraph ｜ Chroma ｜ BGE-M3 本地 CPU ｜ Marker + PaddleOCR ｜ AntV G6 + ECharts ｜ KaTeX ｜ NetworkX ｜ DeepSeek-V3（主）+ 智谱/通义（备）｜ 部署 Docker Compose，演示放 HF Spaces Docker（免费不睡）
+Next.js 14 + TS + Tailwind + shadcn/ui ｜ FastAPI + uv + Python 3.11 ｜ LangGraph ｜ Chroma ｜ BGE-M3 本地 CPU ｜ Marker + PaddleOCR ｜ AntV G6 + ECharts ｜ KaTeX ｜ NetworkX ｜ DeepSeek-V4.1（主，API 模型名 `deepseek-chat`）+ 通义千问/智谱（备）｜ 部署 Docker Compose，演示放 HF Spaces Docker（免费不睡）
 
 ## 边界
 - 神经系统2 只提供素材（data/ 喂 J7、论文/report 喂 M1）、叙事（演示开场）、纪律（这套工作法）；不提供任何交付代码

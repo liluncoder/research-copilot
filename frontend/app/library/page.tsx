@@ -7,12 +7,17 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { OutlineTree } from "@/components/outline-tree";
 import {
+  type DedupAction,
+  type DedupInfo,
   type DocumentDetail,
   type DocumentMeta,
+  type VersionDiff,
+  compareDocuments,
   deleteDocument,
   getDocument,
   humanSize,
   listDocuments,
+  resolveDedup,
   uploadDocument,
 } from "@/lib/api";
 
@@ -20,6 +25,8 @@ export default function LibraryPage() {
   const [items, setItems] = useState<DocumentMeta[]>([]);
   const [selected, setSelected] = useState<DocumentDetail | null>(null);
   const [activeSection, setActiveSection] = useState<string | null>(null);
+  const [dedup, setDedup] = useState<(DedupInfo & { docId: string }) | null>(null);
+  const [diff, setDiff] = useState<VersionDiff | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -51,6 +58,8 @@ export default function LibraryPage() {
         kind: "ok",
         text: `已入库 ${res.meta.doc_id}：${res.meta.n_headings} 个标题 / ${res.meta.n_references} 条参考文献 / 解析 ${res.meta.parse_seconds}s`,
       });
+      setDiff(null);
+      setDedup(res.dedup.has_warning ? { ...res.dedup, docId: res.meta.doc_id } : null);
       await refresh();
       await open(res.meta.doc_id);
     } catch (e) {
@@ -79,6 +88,44 @@ export default function LibraryPage() {
       setMessage({ kind: "ok", text: `已删除 ${docId}` });
     } catch (e) {
       setMessage({ kind: "err", text: `删除失败：${String(e)}` });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function act(action: DedupAction, targetDocId?: string) {
+    if (!dedup) return;
+    setBusy(true);
+    try {
+      const res = await resolveDedup(dedup.docId, action, targetDocId);
+      const label: Record<DedupAction, string> = {
+        keep_both: "已保留两份",
+        replace_existing: "已用新上传的版本替换库中旧版",
+        discard_new: "已放弃本次上传",
+      };
+      setMessage({ kind: "ok", text: label[action] });
+      setDedup(null);
+      setDiff(null);
+      if (action !== "keep_both") setSelected(null);
+      await refresh();
+      void res;
+    } catch (e) {
+      setMessage({ kind: "err", text: `处理失败：${String(e)}` });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function showDiff(candidateId: string, existingIsNewer: boolean) {
+    if (!dedup) return;
+    setBusy(true);
+    try {
+      // 旧的在前、新的在后：库中较新 ⇒ 新上传的是旧版
+      const older = existingIsNewer ? dedup.docId : candidateId;
+      const newer = existingIsNewer ? candidateId : dedup.docId;
+      setDiff(await compareDocuments(older, newer));
+    } catch (e) {
+      setMessage({ kind: "err", text: `对比失败：${String(e)}` });
     } finally {
       setBusy(false);
     }
@@ -132,6 +179,79 @@ export default function LibraryPage() {
           )}
         </CardContent>
       </Card>
+
+      {dedup && (
+        <Card className="mb-6 border-destructive">
+          <CardHeader>
+            <CardTitle className="text-base text-destructive">
+              检测到疑似重复：库中已有内容高度重合的论文
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            {dedup.exists_newer && (
+              <p className="rounded bg-muted p-2 text-destructive">
+                ⚠ 库中已有<strong>更新</strong>的版本，你上传的是较旧的版本 —— 一般建议保留库中那份。
+              </p>
+            )}
+            {dedup.candidates.map((c) => (
+              <div key={c.doc_id} className="rounded border p-3">
+                <p className="font-medium">{c.filename}</p>
+                <p className="text-xs text-muted-foreground">
+                  {dedup.metric} {Math.round(c.similarity * 100)}%（判据阈值{" "}
+                  {Math.round(dedup.threshold * 100)}%）
+                </p>
+                <p className="mt-1 text-xs">{c.reason}</p>
+                <button
+                  type="button"
+                  onClick={() => void showDiff(c.doc_id, c.existing_is_newer)}
+                  className="mt-2 text-xs underline"
+                  disabled={busy}
+                >
+                  查看两版主要差异
+                </button>
+              </div>
+            ))}
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => void act("keep_both")}
+                className="rounded border px-3 py-1.5 text-sm disabled:opacity-50"
+              >
+                保留两份
+              </button>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => void act("replace_existing", dedup.candidates[0]?.doc_id)}
+                className="rounded border px-3 py-1.5 text-sm disabled:opacity-50"
+              >
+                用新上传的替换库中旧版
+              </button>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => void act("discard_new")}
+                className="rounded border px-3 py-1.5 text-sm text-destructive disabled:opacity-50"
+              >
+                放弃本次上传
+              </button>
+            </div>
+
+            {diff && (
+              <div className="rounded bg-muted p-3 text-xs leading-relaxed">
+                <p className="mb-1 font-medium">
+                  {diff.diff.old_label} → {diff.diff.new_label}
+                  <span className="ml-2 font-normal text-muted-foreground">
+                    （摘要来源：{diff.summary_source === "llm" ? "大模型" : "确定性统计"}）
+                  </span>
+                </p>
+                <p className="whitespace-pre-wrap">{diff.summary || diff.fallback_summary}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-[20rem_1fr]">
         <section>
