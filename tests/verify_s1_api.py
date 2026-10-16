@@ -68,7 +68,7 @@ def main() -> int:
     check("判定为文本层 PDF", meta["doc_type"] == "text", f"实得 {meta['doc_type']}")
     check("标题数 25", meta["n_headings"] == 25, f"实得 {meta['n_headings']}")
     check("参考文献 36", meta["n_references"] == 36, f"实得 {meta['n_references']}")
-    check("公式行 92", meta["n_math_lines"] == 92, f"实得 {meta['n_math_lines']}")
+    check("公式行 102", meta["n_math_lines"] == 102, f"实得 {meta['n_math_lines']}")
     check("无警告", meta["warnings"] == [], f"实得 {meta['warnings']}")
 
     # ---- 2. 标题树结构 ----

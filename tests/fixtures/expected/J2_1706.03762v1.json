@@ -205,13 +205,14 @@
   "reference_first": "Jimmy Lei Ba, Jamie Ryan Kiros, and Geoffrey E Hinton. Layer normalization. arXiv preprint arXiv:1607.06450, 2016.",
   "reference_last": "Muhua Zhu, Yue Zhang, Wenliang Chen, Min Zhang, and Jingbo Zhu. Fast and accurate shift-reduce constituent parsing. In Proceedings of the 51st Annual Meeting of the ACL (Volume 1: Long Papers), pages 434–443. ACL, August 2013.",
   "stats": {
-    "lines": 567,
+    "lines": 812,
+    "text_chars": 36043,
     "headings": 25,
     "h1": 10,
     "h2": 12,
     "h3": 3,
     "references": 36,
     "abstract_chars": 1135,
-    "math_lines": 92
+    "math_lines": 102
   }
 }
