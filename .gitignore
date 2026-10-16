@@ -1,0 +1,32 @@
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# 环境与密钥（★只进环境变量，见 .env.example）
+.env
+.env.local
+.env.*.local
+
+# 构建产物
+.next/
+out/
+dist/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# 大文件与本地数据（模型权重 / 向量库 / 上传件）
+*.bin
+*.npz
+chroma_data/
+data/uploads/
+
+# 系统杂项
+Thumbs.db
+desktop.ini
+
+# 本目录临时文件（调试日志/中间产物，一律不进仓库）
+_*
+*.log
