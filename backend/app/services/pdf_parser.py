@@ -121,15 +121,21 @@ class ParsedDocument:
 
     def outline_tree(self) -> list[dict[str, Any]]:
         """把扁平 outline 还原成嵌套树（前端标题树导航直接用这个）。"""
-        root: list[dict[str, Any]] = []
-        stack: list[tuple[int, dict[str, Any]]] = []
-        for h in self.outline:
-            node = {"label": h.label, "level": h.level, "page": h.page, "children": []}
-            while stack and stack[-1][0] >= h.level:
-                stack.pop()
-            (stack[-1][1]["children"] if stack else root).append(node)
-            stack.append((h.level, node))
-        return root
+        return build_outline_tree([asdict(h) for h in self.outline])
+
+
+def build_outline_tree(flat: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """扁平标题列表 ⇒ 嵌套树。用栈维护祖先链，遇到同级或更高级就弹栈。"""
+    root: list[dict[str, Any]] = []
+    stack: list[tuple[int, dict[str, Any]]] = []
+    for h in flat:
+        label = f"{h['number']} {h['title']}" if h.get("number") else h["title"]
+        node = {"label": label, "level": h["level"], "page": h["page"], "children": []}
+        while stack and stack[-1][0] >= h["level"]:
+            stack.pop()
+        (stack[-1][1]["children"] if stack else root).append(node)
+        stack.append((h["level"], node))
+    return root
 
 
 # ============================ 底层：抽行 ============================
@@ -462,6 +468,7 @@ def parse_pdf(path: str | Path, max_pages: int | None = None) -> ParsedDocument:
         warnings=warnings,
         stats={
             "lines": len(lines),
+            "text_chars": sum(len(ln.text) for ln in lines),
             "headings": len(outline),
             "h1": sum(1 for h in outline if h.level == 1),
             "h2": sum(1 for h in outline if h.level == 2),

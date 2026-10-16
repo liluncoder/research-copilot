@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -40,6 +41,14 @@ export default function Home() {
         <p className="text-muted-foreground">
           全流程科研助手 · 全国高校 AI 大模型挑战赛（B 组 · 个人）· S0 骨架阶段
         </p>
+        <nav className="mt-4 flex gap-4 text-sm">
+          <Link href="/" className="font-medium underline">
+            首页
+          </Link>
+          <Link href="/library" className="underline">
+            文献库（M1 解析）
+          </Link>
+        </nav>
       </header>
 
       <Card className="mb-8">
