@@ -1,0 +1,217 @@
+{
+  "source": "1706.03762v1.pdf",
+  "title": "Attention Is All You Need",
+  "authors": [
+    "Ashish Vaswani",
+    "Noam Shazeer",
+    "Niki Parmar",
+    "Jakob Uszkoreit",
+    "Llion Jones",
+    "Aidan N. Gomez",
+    "Łukasz Kaiser",
+    "Illia Polosukhin"
+  ],
+  "n_authors": 8,
+  "outline": [
+    {
+      "level": 1,
+      "number": null,
+      "title": "Abstract",
+      "page": 1
+    },
+    {
+      "level": 1,
+      "number": "1",
+      "title": "Introduction",
+      "page": 1
+    },
+    {
+      "level": 1,
+      "number": "2",
+      "title": "Background",
+      "page": 2
+    },
+    {
+      "level": 1,
+      "number": "3",
+      "title": "Model Architecture",
+      "page": 2
+    },
+    {
+      "level": 2,
+      "number": "3.1",
+      "title": "Encoder and Decoder Stacks",
+      "page": 2
+    },
+    {
+      "level": 2,
+      "number": "3.2",
+      "title": "Attention",
+      "page": 3
+    },
+    {
+      "level": 3,
+      "number": "3.2.1",
+      "title": "Scaled Dot-Product Attention",
+      "page": 3
+    },
+    {
+      "level": 3,
+      "number": "3.2.2",
+      "title": "Multi-Head Attention",
+      "page": 4
+    },
+    {
+      "level": 3,
+      "number": "3.2.3",
+      "title": "Applications of Attention in our Model",
+      "page": 4
+    },
+    {
+      "level": 2,
+      "number": "3.3",
+      "title": "Position-wise Feed-Forward Networks",
+      "page": 5
+    },
+    {
+      "level": 2,
+      "number": "3.4",
+      "title": "Embeddings and Softmax",
+      "page": 5
+    },
+    {
+      "level": 2,
+      "number": "3.5",
+      "title": "Positional Encoding",
+      "page": 5
+    },
+    {
+      "level": 1,
+      "number": "4",
+      "title": "Why Self-Attention",
+      "page": 5
+    },
+    {
+      "level": 1,
+      "number": "5",
+      "title": "Training",
+      "page": 6
+    },
+    {
+      "level": 2,
+      "number": "5.1",
+      "title": "Training Data and Batching",
+      "page": 6
+    },
+    {
+      "level": 2,
+      "number": "5.2",
+      "title": "Hardware and Schedule",
+      "page": 7
+    },
+    {
+      "level": 2,
+      "number": "5.3",
+      "title": "Optimizer",
+      "page": 7
+    },
+    {
+      "level": 2,
+      "number": "5.4",
+      "title": "Regularization",
+      "page": 7
+    },
+    {
+      "level": 1,
+      "number": "6",
+      "title": "Results",
+      "page": 7
+    },
+    {
+      "level": 2,
+      "number": "6.1",
+      "title": "Machine Translation",
+      "page": 7
+    },
+    {
+      "level": 2,
+      "number": "6.2",
+      "title": "Model Variations",
+      "page": 8
+    },
+    {
+      "level": 2,
+      "number": "6.3",
+      "title": "English Constituency Parsing",
+      "page": 8
+    },
+    {
+      "level": 1,
+      "number": "7",
+      "title": "Conclusion",
+      "page": 10
+    },
+    {
+      "level": 1,
+      "number": null,
+      "title": "References",
+      "page": 10
+    },
+    {
+      "level": 1,
+      "number": null,
+      "title": "Attention Visualizations",
+      "page": 13
+    }
+  ],
+  "reference_indices": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34,
+    35,
+    36
+  ],
+  "reference_first": "Jimmy Lei Ba, Jamie Ryan Kiros, and Geoffrey E Hinton. Layer normalization. arXiv preprint arXiv:1607.06450, 2016.",
+  "reference_last": "Muhua Zhu, Yue Zhang, Wenliang Chen, Min Zhang, and Jingbo Zhu. Fast and accurate shift-reduce constituent parsing. In Proceedings of the 51st Annual Meeting of the ACL (Volume 1: Long Papers), pages 434–443. ACL, August 2013.",
+  "stats": {
+    "lines": 567,
+    "headings": 25,
+    "h1": 10,
+    "h2": 12,
+    "h3": 3,
+    "references": 36,
+    "abstract_chars": 1135,
+    "math_lines": 92
+  }
+}
