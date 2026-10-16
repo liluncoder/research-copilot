@@ -17,6 +17,7 @@ venv/
 out/
 dist/
 *.egg-info/
+*.tsbuildinfo
 .pytest_cache/
 .ruff_cache/
 
