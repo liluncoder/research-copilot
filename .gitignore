@@ -27,6 +27,8 @@ data/uploads/
 Thumbs.db
 desktop.ini
 
-# 本目录临时文件（调试日志/中间产物，一律不进仓库）
-_*
+# 仓库根目录的临时文件（调试日志/中间产物，一律不进仓库）
+# ★必须写成 /_* 而不是 _*：后者会把子目录里所有以下划线开头的文件一起屏蔽，
+#   包括 Python 的 __init__.py（首次踩到：backend/app/services/__init__.py 静默没进仓库）
+/_*
 *.log
