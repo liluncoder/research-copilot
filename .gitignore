@@ -5,9 +5,12 @@ __pycache__/
 venv/
 
 # 环境与密钥（★只进环境变量，见 .env.example）
+# ★用 .env.* 一次兜住所有变体（.env.local / .env.bak / .env.production …）。
+#   原来只写了 .env.local 和 .env.*.local，漏掉了 .env.bak ——
+#   而"备份 .env"恰恰是密钥最容易泄露进仓库的路径。
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
 
 # 构建产物
 .next/
