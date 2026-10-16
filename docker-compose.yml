@@ -1,3 +1,8 @@
+# ★必须显式写项目名：Compose 默认拿仓库目录名当项目名，
+#   而目录名「传智杯」全是非 ASCII 字符，会被剥成空串 ⇒
+#   "project name must not be empty"。写死名称后，无论谁 clone 到哪个目录都能起。
+name: research-copilot
+
 services:
   backend:
     build: ./backend
