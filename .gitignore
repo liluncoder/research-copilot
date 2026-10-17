@@ -36,3 +36,6 @@ desktop.ini
 #   包括 Python 的 __init__.py（首次踩到：backend/app/services/__init__.py 静默没进仓库）
 /_*
 *.log
+
+# J3 开发期的合成测试件（可用 tools/make_scan.py 重建，不进仓库）
+*_local.pdf
