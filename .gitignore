@@ -39,3 +39,10 @@ desktop.ini
 
 # J3 开发期的合成测试件（可用 tools/make_scan.py 重建，不进仓库）
 *_local.pdf
+
+# J3-b 用的 541 页合成样本（92.7 MB，超过仓库合理体积；
+#  用 backend/tools/make_big_pdf.py --pages 541 可重建）
+_synthetic_*.pdf
+
+# 判据复跑产物（每次跑都会变，不进仓库）
+tests/out/

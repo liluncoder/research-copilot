@@ -8,8 +8,20 @@ dependencies = [
     "uvicorn[standard]>=0.32.0",
     "pydantic-settings>=2.6.0",
     "python-multipart>=0.0.12",
+    # PDF 解析
     "pymupdf>=1.24.0",
+    "numpy>=2.0",
+    "pillow>=10.0",
+    # OCR：RapidOCR 为主（轻、快，见 report/J3_判词.md）
+    "rapidocr_onnxruntime>=1.2.0",
+    # 内存测量（J3 判据）
+    "psutil>=6.0",
 ]
+
+[project.optional-dependencies]
+# PaddleOCR 作为兜底引擎：质量好但在 CPU 上慢 7 倍、依赖重（含 paddlepaddle 100MB+）
+# 且 PaddlePaddle 3.3.1 的 oneDNN 后端有 bug（必须 enable_mkldnn=False）
+ocr-paddle = ["paddlepaddle>=3.0", "paddleocr>=3.0"]
 
 [tool.ruff]
 line-length = 100

@@ -1,40 +1,28 @@
 # STAGE — 阶段级当前状态
 
-**当前阶段：S1（解析）—— J1/J2前半 已过，剩 J3** · 2026-10-16 23:50 更新 · 距省赛截止 33 天
+**当前阶段：S1（解析）收官 —— J1/J2前半/J3 全过，只剩表格解析** · 2026-10-17 13:50 更新 · 距省赛截止 32 天
 
 ```
-S0骨架 ██已完成(10-16) → S1解析(10-18~22) ▓▓进行中 → S2 RAG(10-23~28) → S3阅读器(10-29~11-02)
+S0骨架 ██已完成(10-16) → S1解析 ██基本收官(10-17) → S2 RAG(10-23~28) → S3阅读器(10-29~11-02)
 → S5图谱(11-03~06) → S6写作(11-07~10) → S7收尾(11-11~17) → 11-17 提交
 （S4 arXiv 补充线，夹在 S3 后，可裁剪）
 ```
 
-**今天已完成**（判词 `report/G3_S0_骨架_判词.md`）：
-- S0 骨架**全部结案**：Next.js build 通过、FastAPI 双接口实测 ok、首 commit `1ded49d`（46 文件）
-- **`docker compose up --build` 李论本机实测通过** —— 途中修掉两个真 bug：
-  ① `frontend/public/` 缺失导致 `COPY` 失败；② 中文目录名导致 `project name must not be empty`
-- S0 出口证据存档 `docs/demo/S0_验收_首页已连接.png` + `S0_验收_接口文档.png`
-  （首页绿色「已连接」+ `llm_configured: true`，即 `.env` 密钥已读到）
-- arXiv v1/v7 两件套入库 `tests/fixtures/pdf/`；修掉本机 pip.ini 坏配置
-- 建立李论的工作面：`路线/08`（本人待办 + 10 个必懂概念）、`report/D3_技术文档_草稿.md`、
-  `docs/本机启动手册.md`、`docs/demo/README.md`（录制说明 + 素材清单表）
-- **S1 发车，J2 前半过**：`backend/app/services/pdf_parser.py` 解析出 25 项三级标题树 /
-  92 行公式原文 / 36 条参考文献，复跑 `python tests/verify_j2.py` PASS，判词 `report/J2_判词.md`
-- **S1 出口已通**：文献库 API（上传/列表/详情/取 PDF/删除）+ 前端 `/library` 页
-  复跑 `python tests/verify_s1_api.py`（27 项 PASS）
-- **G2 完成**：双 provider 实测通，`python tools/check_llm.py` 两家各 HTTP 200
-- **J1 过（语义去重）**：`app/services/dedup.py` 用正文 5-gram Jaccard（阈值 0.45，**实测标定**）
-  + 标题匹配 + arXiv 版本号；前端可圈"保留两份 / 覆盖 / 放弃"；差异摘要只喂统计量给 LLM。
-  复跑 `python tests/verify_j1.py`（24 项），判词 `report/J1_判词.md`
-- **解析器跨出版社泛化（10-17）**：李论上传的两篇 e-prop 论文暴露
-  ① 空格 span 被过滤 ⇒ 单词粘成一坨（★我的 bug，对 RAG 是毁灭性的）
-  ② 标题判据写死 arXiv 字号 ⇒ 换出版社即废。改为按本文档样式分布判定。
-  arXiv / 预印本 / Nature 三篇现在都解析正常，三套回归脚本全 PASS
+**今天（10-17）完成**：
+- **J3-a 过（扫描件 OCR）**：`app/parsing/ocr.py`，RapidOCR 主力（39.8 s/页，比 PaddleOCR 关 mkldnn 快 7.4 倍）
+  + PaddleOCR 兜底 + 全不可用抛异常（不许静默返回空串）。扫描件 2 页 100% 走 OCR、关键词 3/3、
+  反向条件（矢量 v1）零误判
+- **J3-b 过（541 页内存硬指标）**：541 页 / 92.7 MB 全量解析 + 1268 块切分，
+  RSS 增量 **26.0 MB**（硬指标 2048 MB，占用 1.3%）
+- 修掉 PaddlePaddle 3.3.1 oneDNN bug（必须 `enable_mkldnn=False`），
+  并把 OCR 判据里的"耗时 <120 s"降级为记录项（沙箱限 CPU，阈值测不出代码好坏）
+- 判词 `report/J3_判词.md`；复跑 `PYTHONPATH=. python tools/run_j3.py`
 
 **待办（按序）**：
-1. 【李论】催组委会发官方测试集（`路线/08` A4 有话术）；报名凭证截图存档
+1. 【李论】催组委会发官方测试集（`路线/08` A4 有话术）；UDL 到手后换 `--pdf` 复跑 J3-b
 2. 【李论】录 S1 素材：`docker compose up --build` → `/library` 上传 v1 → 标题树展开
-3. 【下一步开发】J3（扫描件 OCR / 541 页长文）—— S1 最后一个判据
+3. 【下一步开发】表格解析（J2 后半）→ 然后进 S2（BGE-M3 + Chroma + 标题树切块 → J4）
 
-**判据状态**：J1~J8 全部未测；官方扫描件 + UDL 两件套待组委会发放
+**判据状态**：J1 过 ｜ J2 前半过 ｜ J3-a 过 ｜ J3-b 过 ｜ J4~J8 未测
 
 **详情**：`../../计划表.md`（入口）· `../../路线/02 路线图与逐模块计划.md`（主路线）· `../../路线/06 小阶段目标.md`（今天做什么）
