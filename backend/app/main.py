@@ -16,7 +16,8 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=[o.strip() for o in settings.cors_origins.split(",") if o.strip()],
+    allow_origin_regex=settings.cors_origin_regex or None,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -44,8 +45,8 @@ def modules() -> dict:
     """六大模块当前状态（与路线/06 的小阶段目标对应）。"""
     return {
         "modules": [
-            {"id": "M1", "name": "PDF 解析与语义去重", "stage": "S1", "state": "pending"},
-            {"id": "M2", "name": "抗幻觉 RAG 问答", "stage": "S2", "state": "pending"},
+            {"id": "M1", "name": "PDF 解析与语义去重", "stage": "S1", "state": "done"},
+            {"id": "M2", "name": "抗幻觉 RAG 问答", "stage": "S2", "state": "done"},
             {"id": "M3", "name": "中英联动阅读", "stage": "S3", "state": "pending"},
             {"id": "M4", "name": "arXiv 检索推荐", "stage": "S4", "state": "pending"},
             {"id": "M5", "name": "引用图谱挖掘", "stage": "S5", "state": "pending"},

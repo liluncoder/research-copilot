@@ -49,6 +49,11 @@ class Settings(BaseSettings):
 
     # 服务
     backend_port: int = 8000
+    # ★CORS：前端端口是活的（3000 Docker / 3010 dev / HF Spaces 域名），
+    #   写死一个 origin 会让另一个端口直接 Failed to fetch（实测踩到：3010 被拦）。
+    #   本地开发用正则放行任意 localhost 端口，线上用 CORS_ORIGINS 显式指定。
+    cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
+    cors_origin_regex: str = r"http://(localhost|127\.0\.0\.1):\d+"
 
     def active_llm_key(self) -> str:
         return {
