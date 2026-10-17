@@ -91,6 +91,20 @@ export type VersionDiff = {
   fallback_summary: string;
 };
 
+export type ParsedTable = {
+  index: number;
+  number: number | null;
+  page: number;
+  caption: string;
+  n_rows: number;
+  n_cols: number;
+  header_rows: number;
+  method: string;
+  confidence: number;
+  rows: string[][];
+  markdown: string;
+};
+
 export type DocumentDetail = {
   meta: DocumentMeta;
   outline: OutlineNode[];
@@ -98,6 +112,7 @@ export type DocumentDetail = {
   references: Reference[];
   sections: Section[];
   math_lines: { page: number; text: string; math_chars: number }[];
+  tables?: ParsedTable[];
   abstract: string;
 };
 

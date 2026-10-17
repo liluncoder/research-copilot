@@ -116,6 +116,7 @@ def get_document(doc_id: str) -> dict:
         "references": parsed["references"],
         "sections": parsed["sections"],
         "math_lines": parsed["math_lines"],
+        "tables": parsed.get("tables", []),
         "abstract": parsed["abstract"],
     }
 

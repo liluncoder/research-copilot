@@ -356,6 +356,70 @@ export default function LibraryPage() {
                 </CardContent>
               </Card>
 
+              {(selected.tables?.length ?? 0) > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">
+                      表格
+                      <span className="ml-2 text-xs font-normal text-muted-foreground">
+                        {selected.tables!.length} 张（J2 表格解析）
+                      </span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-5">
+                    {selected.tables!.map((t) => {
+                      const header = t.rows[0] ?? [];
+                      const body = t.rows.slice(1);
+                      const width = Math.max(1, ...t.rows.map((r) => r.length));
+                      return (
+                        <div key={t.index} className="space-y-2">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Badge variant="secondary">Table {t.number ?? t.index}</Badge>
+                            <span className="text-xs text-muted-foreground">
+                              第 {t.page} 页 · {t.n_rows}×{t.n_cols} · 置信度{" "}
+                              {Math.round(t.confidence * 100)}%
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground">{t.caption}</p>
+                          <div className="overflow-x-auto rounded border">
+                            <table className="w-full border-collapse text-xs">
+                              <thead className="bg-muted/60">
+                                <tr>
+                                  {Array.from({ length: width }).map((_, i) => (
+                                    <th
+                                      key={i}
+                                      className="whitespace-nowrap border-b px-2 py-1 text-left font-medium"
+                                    >
+                                      {header[i] ?? ""}
+                                    </th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {body.map((r, ri) => (
+                                  <tr key={ri} className="border-b last:border-0">
+                                    {Array.from({ length: width }).map((_, ci) => (
+                                      <td key={ci} className="px-2 py-1 align-top">
+                                        {r[ci] ?? ""}
+                                      </td>
+                                    ))}
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                          {t.confidence < 0.7 && (
+                            <p className="text-xs text-destructive">
+                              结构置信度偏低，单元格可能有错位（见技术文档已知限制）
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </CardContent>
+                </Card>
+              )}
+
               {section && (
                 <Card>
                   <CardHeader>
