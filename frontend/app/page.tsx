@@ -51,6 +51,9 @@ export default function Home() {
           <Link href="/ask" className="underline">
             问答（M2 抗幻觉）
           </Link>
+          <Link href="/reader" className="underline">
+            阅读器（M3 联动）
+          </Link>
         </nav>
       </header>
 

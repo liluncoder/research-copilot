@@ -208,6 +208,83 @@ export function askQuestion(
   }).then((r) => asJson<QAResult>(r));
 }
 
+// ---------------- S3 阅读器（J5） ----------------
+
+export type ReaderParagraph = {
+  para_id: string;
+  section: string;
+  section_index: number;
+  page_start: number;
+  page_end: number;
+  index_in_section: number;
+  text: string;
+  citations: number[];
+};
+
+export type ReaderRef = {
+  index: number;
+  raw: string;
+  year: number | null;
+  arxiv_id: string | null;
+  cited_count: number;
+  cited_in: string[];
+};
+
+export type ReaderSection = {
+  index: number;
+  label: string;
+  level: number;
+  page_start: number;
+  page_end: number;
+  n_paragraphs: number;
+  para_ids: string[];
+  nav_para_id?: string | null;
+};
+
+export type ReaderView = {
+  doc_id: string;
+  source: string;
+  title: string | null;
+  authors: string[];
+  abstract: string;
+  outline: OutlineNode[];
+  sections: ReaderSection[];
+  paragraphs: ReaderParagraph[];
+  references: ReaderRef[];
+  cited_by: Record<string, string[]>;
+  stats: {
+    n_sections: number;
+    n_paragraphs: number;
+    n_references: number;
+    n_citation_marks: number;
+    n_refs_cited: number;
+    dangling_citations: number[];
+  };
+  meta: { filename: string; title: string | null; page_count: number; doc_type: string };
+};
+
+export function getReader(docId: string): Promise<ReaderView> {
+  return fetch(`${API_URL}/api/v1/documents/${docId}/reader`, { cache: "no-store" }).then((r) =>
+    asJson<ReaderView>(r),
+  );
+}
+
+export type TranslateResult = {
+  items: Record<string, string>;
+  cached: number;
+  translated: number;
+  failed: number;
+  errors?: string[];
+};
+
+export function translateParagraphs(docId: string, paraIds?: string[]): Promise<TranslateResult> {
+  return fetch(`${API_URL}/api/v1/documents/${docId}/translate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ para_ids: paraIds ?? null, limit: 8 }),
+  }).then((r) => asJson<TranslateResult>(r));
+}
+
 export type DedupAction = "keep_both" | "replace_existing" | "discard_new";
 
 export function resolveDedup(
