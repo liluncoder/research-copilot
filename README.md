@@ -1,5 +1,7 @@
 # 科研助手 Agent（Research Copilot）
 
+> 仓库地址：<https://github.com/liluncoder/research-copilot>　（省赛 B 组参赛作品）
+
 > 全国高校 AI 大模型挑战赛 ·「智领科研·意图驱动」赛项参赛作品（个人 · B 组）  
 > 全流程科研助手 Agent：文献智能解析 → 抗幻觉问答 → 联动翻译阅读 → 检索推荐 → 引用图谱 → 写作辅助
 
@@ -43,6 +45,7 @@ cd frontend && pnpm install && pnpm dev
 | J3 扫描件 OCR + 541 页内存 | Windows：`backend\tools\run_j3.cmd`　Linux/macOS：`python backend/tools/run_j3.py` |
 | S1 文献库 API | `python tests/verify_s1_api.py` |
 | S2 检索（切块/混合召回/出处） | `python tests/verify_s2_retrieval.py`（加 `--backend bge-m3` 用真向量） |
+| J4 问答（三连问 + 出处 + 拒答） | `python tests/verify_j4_qa.py`（需 .env 里的 LLM key） |
 
 > ★Windows 用户注意：PowerShell 5.1 **不支持** `cd a && b` 这种写法，
 > 请一行一行执行；J3 脚本已内置解释器自动选择，不需要设 `PYTHONPATH`。

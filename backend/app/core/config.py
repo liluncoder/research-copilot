@@ -1,12 +1,21 @@
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# ★仓库根的 .env（backend/app/core/config.py → parents[3] = 仓库根）
+#   踩过的坑：pydantic-settings 默认按**当前工作目录**找 .env，
+#   从 backend/ 起服务时就读不到根目录的 .env ⇒ llm_configured 假 false。
+ROOT_ENV = Path(__file__).resolve().parents[3] / ".env"
 
 
 class Settings(BaseSettings):
     """★密钥只从这里读环境变量；.env 不进仓库（见根 .gitignore）。"""
 
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    # 两个都读：仓库根的 .env 优先（本地开发），其次当前目录（Docker 里通常直接注入环境变量）
+    model_config = SettingsConfigDict(
+        env_file=(str(ROOT_ENV), ".env"), extra="ignore"
+    )
 
     # LLM
     llm_provider: str = "deepseek"

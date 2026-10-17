@@ -20,6 +20,8 @@ dependencies = [
     # ★部署注意：torch CPU 版约 200MB、BGE-M3 权重 2.2GB，镜像会明显变大（见 路线/05 风险 R4）
     "chromadb>=0.5",
     "sentence-transformers>=3.0",
+    # S2 回答层编排（plan→retrieve→answer→verify）；未装时退到等价顺序执行器
+    "langgraph>=0.2",
 ]
 
 [project.optional-dependencies]
