@@ -42,6 +42,7 @@ cd frontend && pnpm install && pnpm dev
 | J2 表格（4 张表结构 + 关键数值） | `python tests/verify_j2_tables.py` |
 | J3 扫描件 OCR + 541 页内存 | Windows：`backend\tools\run_j3.cmd`　Linux/macOS：`python backend/tools/run_j3.py` |
 | S1 文献库 API | `python tests/verify_s1_api.py` |
+| S2 检索（切块/混合召回/出处） | `python tests/verify_s2_retrieval.py`（加 `--backend bge-m3` 用真向量） |
 
 > ★Windows 用户注意：PowerShell 5.1 **不支持** `cd a && b` 这种写法，
 > 请一行一行执行；J3 脚本已内置解释器自动选择，不需要设 `PYTHONPATH`。

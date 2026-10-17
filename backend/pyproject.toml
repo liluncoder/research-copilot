@@ -16,6 +16,10 @@ dependencies = [
     "rapidocr_onnxruntime>=1.2.0",
     # 内存测量（J3 判据）
     "psutil>=6.0",
+    # S2 检索：Chroma 向量库 + BGE-M3（sentence-transformers 会带 torch）
+    # ★部署注意：torch CPU 版约 200MB、BGE-M3 权重 2.2GB，镜像会明显变大（见 路线/05 风险 R4）
+    "chromadb>=0.5",
+    "sentence-transformers>=3.0",
 ]
 
 [project.optional-dependencies]

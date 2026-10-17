@@ -24,6 +24,16 @@ class Settings(BaseSettings):
     embedding_model: str = "BAAI/bge-m3"
     ocr_lang: str = "ch"
 
+    # S2 检索
+    # auto = 有 BGE-M3 就用，没有就退到离线 hash 向量（保证管线能跑、判据能复现）
+    embedding_backend: str = "auto"  # auto | bge-m3 | hash
+    embedding_device: str = "cpu"
+    rag_chunk_chars: int = 900
+    rag_chunk_overlap: int = 120
+    rag_top_k: int = 5
+    rag_dense_weight: float = 1.0
+    rag_sparse_weight: float = 1.0
+
     # 存储
     chroma_persist_dir: str = "./chroma_data"
     upload_dir: str = "./data/uploads"

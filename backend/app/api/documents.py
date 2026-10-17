@@ -20,6 +20,7 @@ from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 from fastapi.responses import FileResponse
 
 from app.core import storage
+from app.rag import service as rag_service
 from app.schemas import DedupResolveRequest
 from app.services import dedup
 from app.services.pdf_parser import build_outline_tree, parse_pdf
@@ -56,6 +57,14 @@ async def upload_document(
 
         parsed = parsed_doc.as_dict()
         storage.save_parsed(doc_id, parsed)
+
+        # S2：解析完立刻建检索索引（失败不阻塞上传 —— 但不能静默，记进 warnings）
+        try:
+            idx = rag_service.index_document(doc_id, parsed, filename=meta.filename)
+            if idx.get("warning"):
+                meta.warnings.append(f"检索索引：{idx['warning']}")
+        except Exception as e:  # noqa: BLE001
+            meta.warnings.append(f"检索索引构建失败（可稍后重建）：{type(e).__name__}: {e}")
 
         # 用解析结果补全元数据
         meta.page_count = parsed_doc.page_count
@@ -133,6 +142,11 @@ def get_pdf(doc_id: str) -> FileResponse:
 def delete_document(doc_id: str) -> dict:
     try:
         ok = storage.delete_document(doc_id)
+        if ok:
+            try:
+                rag_service.delete_document_index(doc_id)
+            except Exception:  # noqa: BLE001 - 索引残留不影响删除主流程
+                pass
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     if not ok:
