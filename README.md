@@ -33,6 +33,18 @@ cd backend && uv sync && uv run uvicorn app.main:app --reload
 cd frontend && pnpm install && pnpm dev
 ```
 
+### 判据复跑（一条命令验一个判据）
+
+| 判据 | 命令（在仓库根目录） |
+|---|---|
+| J1 语义去重 | `python tests/verify_j1.py` |
+| J2 解析（标题树/公式/参考文献） | `python tests/verify_j2.py` |
+| J3 扫描件 OCR + 541 页内存 | Windows：`backend\tools\run_j3.cmd`　Linux/macOS：`python backend/tools/run_j3.py` |
+| S1 文献库 API | `python tests/verify_s1_api.py` |
+
+> ★Windows 用户注意：PowerShell 5.1 **不支持** `cd a && b` 这种写法，
+> 请一行一行执行；J3 脚本已内置解释器自动选择，不需要设 `PYTHONPATH`。
+
 ## 目录结构
 
 ```

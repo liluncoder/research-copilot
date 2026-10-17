@@ -16,7 +16,7 @@ S0骨架 ██已完成(10-16) → S1解析 ██基本收官(10-17) → S2 RA
   RSS 增量 **26.0 MB**（硬指标 2048 MB，占用 1.3%）
 - 修掉 PaddlePaddle 3.3.1 oneDNN bug（必须 `enable_mkldnn=False`），
   并把 OCR 判据里的"耗时 <120 s"降级为记录项（沙箱限 CPU，阈值测不出代码好坏）
-- 判词 `report/J3_判词.md`；复跑 `PYTHONPATH=. python tools/run_j3.py`
+- 判词 `report/J3_判词.md`；复跑 `.\tools\run_j3.cmd`
 
 **待办（按序）**：
 1. 【李论】催组委会发官方测试集（`路线/08` A4 有话术）；UDL 到手后换 `--pdf` 复跑 J3-b

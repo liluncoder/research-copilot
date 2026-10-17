@@ -1,6 +1,11 @@
 # 统一使用 LF 行尾（评审环境多为 Linux；Docker 构建也要求 LF）
 * text=auto eol=lf
 
+# ★Windows 批处理必须 CRLF：cmd.exe 解析多行 if (...) 块会粘连，
+#   症状是"窗口闪一下就关"、用户看不到任何报错。git 默认会把它们转成 LF，所以要显式钉死。
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
 # 二进制文件不做转换
 *.pdf binary
 *.png binary

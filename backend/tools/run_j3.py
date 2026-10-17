@@ -16,6 +16,9 @@ import sys
 import time
 from pathlib import Path
 
+# ★让脚本从任何目录、任何方式调用都能 import app（不依赖 PYTHONPATH 环境变量）
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
 FIX = Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "pdf"
 OUT = Path(__file__).resolve().parents[2] / "tests" / "out"
 
@@ -79,12 +82,15 @@ def j3a_negative() -> dict:
     }
 
 
-def j3b_memory() -> dict:
-    """J3-b：541 页级负载，RSS 增量 < 2048 MB 且曲线平台化。"""
+def j3b_memory(pdf_path: Path | None = None) -> dict:
+    """J3-b：541 页级负载，RSS 增量 < 2048 MB 且曲线平台化。
+
+    `pdf_path` 给了就用它（★官方 UDL 到手后：`--pdf <UDL路径>` 直接换源复跑，判据口径不变）。
+    """
     from app.parsing.memory import MemoryProbe, rss_mb
     from app.parsing.pipeline import parse_pdf
 
-    big = FIX / "_synthetic_541p.pdf"
+    big = pdf_path or (FIX / "_synthetic_541p.pdf")
     src = FIX / "1706.03762v1.pdf"
 
     probe = MemoryProbe(sample_every=25)
@@ -141,6 +147,12 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--j3a", action="store_true")
     ap.add_argument("--j3b", action="store_true")
+    ap.add_argument(
+        "--pdf",
+        type=Path,
+        default=None,
+        help="J3-b 换源：官方 UDL 到手后用它（判据口径不变）",
+    )
     ap.add_argument("--json", type=Path, default=OUT / "j3_report.json")
     a = ap.parse_args()
     run_all = not (a.j3a or a.j3b)
@@ -156,7 +168,7 @@ def main() -> int:
         print("=" * 60)
         print("J3-b 541 页内存硬指标")
         print("=" * 60)
-        results.append(j3b_memory())
+        results.append(j3b_memory(a.pdf))
 
     for r in results:
         print(f"\n[{r['judge']}] {r['status']}")

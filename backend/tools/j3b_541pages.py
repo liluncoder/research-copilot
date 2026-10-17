@@ -12,8 +12,12 @@ from __future__ import annotations
 import argparse
 import gc
 import json
+import sys
 import time
 from pathlib import Path
+
+# ★让脚本从任何目录、任何方式调用都能 import app（不依赖 PYTHONPATH 环境变量）
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.parsing.memory import MemoryProbe
 from app.parsing.pipeline import iter_text_chunks, parse_pdf

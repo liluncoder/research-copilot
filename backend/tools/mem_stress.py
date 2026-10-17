@@ -15,14 +15,22 @@ from __future__ import annotations
 
 import argparse
 import gc
+import sys
 from pathlib import Path
+
+# ★让脚本从任何目录、任何方式调用都能 import app（不依赖 PYTHONPATH 环境变量）
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.parsing.memory import MemoryProbe, format_report, rss_mb
 
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--pdf", type=Path, default=Path("../tests/fixtures/pdf/1706.03762v1.pdf"))
+    ap.add_argument(
+        "--pdf",
+        type=Path,
+        default=Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "pdf" / "1706.03762v1.pdf",
+    )
     ap.add_argument("--loop", type=int, default=0, help="合成压力模式：反复解析次数")
     ap.add_argument("--ocr", action="store_true")
     a = ap.parse_args()
