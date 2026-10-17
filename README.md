@@ -39,6 +39,7 @@ cd frontend && pnpm install && pnpm dev
 |---|---|
 | J1 语义去重 | `python tests/verify_j1.py` |
 | J2 解析（标题树/公式/参考文献） | `python tests/verify_j2.py` |
+| J2 表格（4 张表结构 + 关键数值） | `python tests/verify_j2_tables.py` |
 | J3 扫描件 OCR + 541 页内存 | Windows：`backend\tools\run_j3.cmd`　Linux/macOS：`python backend/tools/run_j3.py` |
 | S1 文献库 API | `python tests/verify_s1_api.py` |
 

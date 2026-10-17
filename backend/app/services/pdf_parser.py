@@ -38,6 +38,8 @@ from typing import Any, Iterable
 
 import pymupdf
 
+from app.services.tables import Table, extract_tables_from_page
+
 # ---------- 排版启发式阈值（集中放这里，调参只改这一处）----------
 HEADING_MAX_CHARS = 90  # 标题不会太长，超了当正文（防误判）
 SHORT_LINE_CHARS = 60  # "短行"的门槛，用于统计某个样式是不是标题样式
@@ -170,6 +172,7 @@ class ParsedDocument:
     math_lines: list[dict[str, Any]]
     warnings: list[str]
     stats: dict[str, Any]
+    tables: list[Table] = field(default_factory=list)
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -183,6 +186,7 @@ class ParsedDocument:
             "sections": self.sections,
             "references": [asdict(r) for r in self.references],
             "math_lines": self.math_lines,
+            "tables": [t.as_dict() for t in self.tables],
             "warnings": self.warnings,
             "stats": self.stats,
         }
@@ -857,10 +861,11 @@ def _finalize_ref(index: int, buf: list[str]) -> Reference:
 # ============================ 主入口 ============================
 
 
-def parse_pdf(path: str | Path, max_pages: int | None = None) -> ParsedDocument:
-    """解析一篇 PDF，产出结构化文档（标题树 / 章节内容 / 参考文献 / 公式行）。
+def parse_pdf(path: str | Path, max_pages: int | None = None, *, with_tables: bool = True) -> ParsedDocument:
+    """解析一篇 PDF，产出结构化文档（标题树 / 章节内容 / 参考文献 / 公式行 / 表格）。
 
     max_pages 用于 541 页长文档的分批处理（J3 的内存硬指标），这里先留口子。
+    with_tables=False 可跳过表格抽取（纯文本用途时省时间）。
     """
     path = Path(path)
     doc = pymupdf.open(path)
@@ -868,11 +873,13 @@ def parse_pdf(path: str | Path, max_pages: int | None = None) -> ParsedDocument:
 
     lines: list[Line] = []
     pages_text: list[str] = []
+    all_tables: list[Table] = []
     limit = min(doc.page_count, max_pages) if max_pages else doc.page_count
     for i in range(limit):
-        lines.extend(_page_lines(doc[i], i + 1))
-        # 全文原文：去重（J1）与后续 RAG 切块都从这里取，不依赖标题识别是否成功
         pages_text.append(doc[i].get_text())
+        lines.extend(_page_lines(doc[i], i + 1))
+        if with_tables:
+            all_tables.extend(extract_tables_from_page(doc[i], i + 1))
 
     lines = [ln for ln in lines if ln.text.strip()]
     # ⓪ 第一遍合并：样式分析还没做，只能靠粗体。否则"1"与"Introduction"分家，
@@ -961,6 +968,18 @@ def parse_pdf(path: str | Path, max_pages: int | None = None) -> ParsedDocument:
     if not references:
         warnings.append("未抽到参考文献条目（检查是否有 References 标题）")
 
+    # ---- 表格 ----
+    for idx, t in enumerate(all_tables, start=1):
+        t.index = idx
+    if with_tables:
+        if not all_tables:
+            warnings.append("未识别到表格（可能无表、或表无 caption 无 rule）")
+        else:
+            low = [f"Table {t.number}(p{t.page},conf={t.confidence:.2f})"
+                   for t in all_tables if t.confidence < 0.7]
+            if low:
+                warnings.append("以下表格结构置信度偏低，单元格可能错位：" + "、".join(low))
+
     if limit < doc.page_count:
         warnings.append(f"仅解析前 {limit} 页（max_pages={max_pages}）")
 
@@ -990,7 +1009,9 @@ def parse_pdf(path: str | Path, max_pages: int | None = None) -> ParsedDocument:
             "references": len(references),
             "abstract_chars": len(abstract),
             "math_lines": sum(1 for ln in lines if ln.has_math),
+            "tables": len(all_tables),
         },
+        tables=all_tables,
     )
 
 
