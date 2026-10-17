@@ -19,15 +19,24 @@ _CJK = re.compile(r"[\u4e00-\u9fff]+")
 
 
 def tokenize(text: str) -> list[str]:
-    """英文按词（保留 5.3 / β1 这类带标点的形态），中文按二元组。"""
+    """英文按词（保留 5.3 / β1 这类带标点的形态），中文按二元组。
+
+    ★连字符要**同时保留整体与拆开两种形态**：
+      原文写 `three-factor`，用户问 `three factor` —— 不做变体就匹配不上。
+      实测：e-prop 的三因子规则就因为这一条漏召回（"three-factor" 出现 3~5 次却检索不到）。
+    """
     low = text.lower()
-    tokens = _WORD.findall(low)
+    out: list[str] = []
+    for tok in _WORD.findall(low):
+        out.append(tok)
+        if "-" in tok:
+            out.extend(p for p in tok.split("-") if p)
     for run in _CJK.findall(low):
         if len(run) == 1:
-            tokens.append(run)
+            out.append(run)
         else:
-            tokens.extend(run[i : i + 2] for i in range(len(run) - 1))
-    return tokens
+            out.extend(run[i : i + 2] for i in range(len(run) - 1))
+    return out
 
 
 @dataclass

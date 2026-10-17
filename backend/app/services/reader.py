@@ -2,7 +2,8 @@
 
 把解析结果加工成"可跳转"的视图：
 1. 段落切分 + 稳定 id（`p<节序号>-<段序号>`）—— 联动滚动和双向跳转都靠它定位
-2. 从段文本里抽引用标记 `[11]` / `[11, 12]` / `[11–13]`，建立两套索引：
+2. 从段文本里抽引用标记 —— **数字制** `[11]` 与**作者-年份制** `(Bellec et al., 2020)` 都支持
+   （Nature/Neural Computation 用后者，只做数字制会让这些论文的引用数接近 0），建立两套索引：
    · `citations_of[para_id] = [11, 12]`  （正文 → 参考文献）
    · `cited_by[11] = [para_id, ...]`     （参考文献 → 正文，即"反查引用"）
 3. 参考文献按 index 归位，标出"被正文引用过几次"
@@ -13,31 +14,10 @@
 
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass, field
 from typing import Any
 
-# [11] / [11, 12] / [11–13] / [11-13]；不含方括号里的字母（那是 [CLS] 这类模型符号）
-CITE_RE = re.compile(r"\[(\d{1,3}(?:\s*[,–-]\s*\d{1,3})*)\]")
-
-
-def expand_citation(token: str) -> list[int]:
-    """`"11, 12"` / `"11–13"` ⇒ [11,12] / [11,12,13]。"""
-    out: list[int] = []
-    for part in re.split(r"\s*,\s*", token):
-        part = part.strip()
-        if not part:
-            continue
-        m = re.fullmatch(r"(\d{1,3})\s*[–-]\s*(\d{1,3})", part)
-        if m:
-            a, b = int(m.group(1)), int(m.group(2))
-            if 0 < b - a <= 30:  # 防 "1-2017" 这类误扩
-                out.extend(range(a, b + 1))
-            else:
-                out.extend([a, b])
-        elif part.isdigit():
-            out.append(int(part))
-    return sorted({x for x in out if 1 <= x <= 999})
+from app.services.citations import build_ref_index, extract_citations
 
 
 @dataclass
@@ -68,6 +48,7 @@ def build_reader_view(parsed: dict, doc_id: str) -> dict[str, Any]:
     """parsed（storage 里存的那份 dict）⇒ 阅读器需要的全部结构。"""
     paragraphs: list[Paragraph] = []
     sections_out: list[dict[str, Any]] = []
+    ref_index = build_ref_index(parsed.get("references") or [])
 
     for si, sec in enumerate(parsed.get("sections") or []):
         label = str(sec.get("label", "")).strip()
@@ -79,10 +60,7 @@ def build_reader_view(parsed: dict, doc_id: str) -> dict[str, Any]:
             if not text:
                 continue
             para_id = f"p{si}-{pi}"
-            cites: list[int] = []
-            for m in CITE_RE.finditer(text):
-                cites.extend(expand_citation(m.group(1)))
-            cites = sorted(set(cites))
+            cites = extract_citations(text, ref_index)
             paragraphs.append(
                 Paragraph(
                     para_id=para_id,

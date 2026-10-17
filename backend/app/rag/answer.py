@@ -314,5 +314,12 @@ def _norm_page(p: str) -> str:
 
 
 def _looks_refused(text: str) -> bool:
-    keys = ["库中未找到", "未找到相关", "无法回答", "没有相关信息"]
-    return any(k in text for k in keys) and not CITE_RE.search(text)
+    """判定"拒答"。
+
+    ★只看**开头**，且不再要求"没有出处"：
+      实测出现过"先拒答、再解释为什么不答、并引用了片段"的回答，
+      旧逻辑（必须有 key 且无引用）会把这种回答判成"已作答"，状态与内容矛盾。
+    """
+    head = text.strip()[:40]
+    keys = ["库中未找到", "未找到相关", "无法回答", "没有相关信息", "无法依据片段"]
+    return any(k in head for k in keys)

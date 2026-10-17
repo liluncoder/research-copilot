@@ -93,6 +93,19 @@ def main() -> int:
         chk("R6", len(got) == len(chunk) and ok_chinese and r2["cached"] == len(chunk),
             f"首译 {r1['translated']} 段（缓存 {r1['cached']}），二次全命中缓存 {r2['cached']}/{len(chunk)}")
 
+    # R8 作者-年份制引用（Nature / Neural Computation 风格）
+    #   ★语料在李论桌面的 snn/ 下（不进仓库）；不存在就 SKIP，避免判据依赖私有文件。
+    snn_dir = Path(os.environ.get("SNN_DIR", r"C://Users//23810//Desktop//snn"))
+    ay_pdf = snn_dir / "01_Bellec2019_eprop_eligibility-traces.pdf"
+    if not ay_pdf.exists():
+        chk("R8", True, f"SKIP：找不到作者-年份制语料（{snn_dir}）")
+    else:
+        ay = reader.build_reader_view(parse_pdf(ay_pdf).as_dict(), "verify-ay")
+        s = ay["stats"]
+        chk("R8", s["n_citation_marks"] >= 30 and s["n_refs_cited"] >= 20,
+            f"作者-年份制：{s['n_citation_marks']} 处引用、{s['n_refs_cited']}/{s['n_references']} 条被引"
+            "（旧版只认 [n]，这里是 3 处 / 2 条）")
+
     print(f"文档：{PDF.name}")
     print(f"  节 {view['stats']['n_sections']} · 段 {view['stats']['n_paragraphs']} · "
           f"引用 {view['stats']['n_citation_marks']} · 参考文献 {view['stats']['n_references']}\n")
