@@ -46,3 +46,8 @@ _synthetic_*.pdf
 
 # 判据复跑产物（每次跑都会变，不进仓库）
 tests/out/
+
+# ★运行时数据：上传件与向量库。原来只写了根目录的 data/uploads/ 和 chroma_data/，
+#   但后端从 backend/ 启动时数据落在 backend/data/ —— 实测被误提交过一次（0a9bff1be357）。
+backend/data/
+backend/chroma_data/

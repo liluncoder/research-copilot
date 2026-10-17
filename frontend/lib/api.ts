@@ -164,6 +164,50 @@ export function humanSize(bytes: number): string {
   return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
 }
 
+// ---------------- S2 问答（J4） ----------------
+
+export type QAStep = { node: string; detail: string; ms: number };
+
+export type QAHit = {
+  chunk_id: string;
+  doc_id: string;
+  filename: string;
+  section: string;
+  page: string;
+  score: number;
+  dense_rank: number | null;
+  sparse_rank: number | null;
+  text: string;
+  citation: string;
+};
+
+export type QAResult = {
+  question: string;
+  answer: string;
+  refused: boolean;
+  citations: string[];
+  invalid_citations: string[];
+  hits: QAHit[];
+  steps: QAStep[];
+  orchestrator: string;
+  error: string | null;
+};
+
+export function askQuestion(
+  question: string,
+  opts: { docIds?: string[]; topK?: number } = {},
+): Promise<QAResult> {
+  return fetch(`${API_URL}/api/v1/qa`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      question,
+      doc_ids: opts.docIds ?? null,
+      top_k: opts.topK ?? 5,
+    }),
+  }).then((r) => asJson<QAResult>(r));
+}
+
 export type DedupAction = "keep_both" | "replace_existing" | "discard_new";
 
 export function resolveDedup(

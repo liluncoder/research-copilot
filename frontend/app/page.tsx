@@ -15,8 +15,8 @@ type Health = {
 };
 
 const MODULES = [
-  { id: "M1", name: "PDF 解析与语义去重", judge: "J1 / J2 / J3", state: "S1 待开发" },
-  { id: "M2", name: "抗幻觉 RAG 问答", judge: "J4", state: "S2 待开发" },
+  { id: "M1", name: "PDF 解析与语义去重", judge: "J1 / J2 / J3", state: "已过" },
+  { id: "M2", name: "抗幻觉 RAG 问答", judge: "J4", state: "已过" },
   { id: "M3", name: "中英联动阅读", judge: "J5", state: "S3 待开发" },
   { id: "M4", name: "arXiv 检索推荐", judge: "—", state: "S4 补充线" },
   { id: "M5", name: "引用图谱挖掘", judge: "J6", state: "S5 待开发" },
@@ -47,6 +47,9 @@ export default function Home() {
           </Link>
           <Link href="/library" className="underline">
             文献库（M1 解析）
+          </Link>
+          <Link href="/ask" className="underline">
+            问答（M2 抗幻觉）
           </Link>
         </nav>
       </header>
