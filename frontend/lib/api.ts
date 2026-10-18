@@ -1,8 +1,9 @@
 /** 后端地址与接口类型（前端唯一知道后端在哪的地方）。 */
 
 // ★NEXT_PUBLIC_* 是**构建时**烧进代码的，不是运行时读的。
-// 本地 Docker 构建没传这个变量 ⇒ 用下面这个兜底值（正好对）。
-// 11 月部署到 HF Spaces 时必须用 build arg 传公网地址，否则线上前端会去连 localhost。
+// 本地开发 / docker compose：不传 ⇒ 兜底 http://localhost:8000（浏览器直连后端）。
+// HF Spaces 单容器：构建期传空串 ⇒ 前端发相对路径，由 next.config 的 rewrite
+// 同源转发到容器内的 uvicorn；这样公网只需要暴露一个 7860 端口。
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 export type DocumentMeta = {

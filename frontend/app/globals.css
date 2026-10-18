@@ -30,6 +30,10 @@
     --success: 168 58% 30%;
     --success-foreground: 0 0% 100%;
 
+    /* 琥珀：扫描件 / 置信度偏低 / 需要人看一眼的提示 */
+    --warning: 32 88% 34%;
+    --warning-foreground: 0 0% 100%;
+
     --muted: 220 20% 96%;
     --muted-foreground: 220 10% 42%;
 
@@ -59,6 +63,9 @@
 
     --success: 168 52% 52%;
     --success-foreground: 224 30% 10%;
+
+    --warning: 36 80% 58%;
+    --warning-foreground: 224 30% 10%;
 
     --muted: 222 18% 17%;
     --muted-foreground: 220 12% 66%;
@@ -150,6 +157,11 @@
     border-color: hsl(var(--primary) / 0.35);
     box-shadow: 0 4px 16px hsl(222 28% 12% / 0.07);
     transform: translateY(-1px);
+  }
+
+  /* 全屏工作台的二级工具条（图谱 / 阅读器）：和顶栏区分开，但不另起一套视觉 */
+  .toolbar {
+    @apply flex flex-wrap items-center gap-2.5 border-b border-border/70 bg-card/55 px-5 py-2;
   }
 
   /* 小节标题：左侧一条竖线，比"加粗加大"更省空间也更整齐 */

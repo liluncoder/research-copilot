@@ -1,10 +1,22 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import { FileText, Loader2, Trash2, Upload } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { OutlineTree } from "@/components/outline-tree";
 import { PageHeader, SiteShell } from "@/components/site-shell";
 import {
@@ -136,43 +148,36 @@ export default function LibraryPage() {
 
   return (
     <SiteShell width="wide">
-      <PageHeader title="文献库" desc="上传 PDF 即完成结构化解析（标题树 / 公式 / 表格 / 参考文献）并自动建检索索引。" />
+      <PageHeader
+        title="文献库"
+        desc="上传 PDF 即完成结构化解析（标题树 / 公式 / 表格 / 参考文献）并自动建检索索引。"
+      />
 
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="text-base">上传论文</CardTitle>
+          <CardDescription>支持文本层 PDF 与扫描件；重复上传会先做语义查重再决定去留。</CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-wrap items-center gap-3">
-          <input
-            ref={fileRef}
-            type="file"
-            accept="application/pdf"
-            className="text-sm file:mr-3 file:rounded file:border file:bg-muted file:px-3 file:py-1.5 file:text-sm"
-          />
-          <button
-            type="button"
-            onClick={onUpload}
-            disabled={busy}
-            className="rounded bg-primary px-4 py-1.5 text-sm text-primary-foreground disabled:opacity-50"
-          >
-            {busy ? "处理中…" : "上传并解析"}
-          </button>
-          {message && (
-            <span
-              className={
-                message.kind === "ok"
-                  ? "text-sm text-muted-foreground"
-                  : "text-sm text-destructive"
-              }
-            >
-              {message.text}
-            </span>
-          )}
+        <CardContent className="space-y-3">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <Input
+              ref={fileRef}
+              type="file"
+              accept="application/pdf"
+              aria-label="选择 PDF"
+              className="h-9 w-auto max-w-full cursor-pointer py-1.5 text-xs file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-1 file:text-[12px] file:text-foreground/80 hover:file:bg-muted/70"
+            />
+            <Button onClick={() => void onUpload()} disabled={busy}>
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+              {busy ? "解析中…" : "上传并解析"}
+            </Button>
+          </div>
+          {message && <Alert variant={message.kind === "ok" ? "success" : "destructive"}>{message.text}</Alert>}
         </CardContent>
       </Card>
 
       {dedup && (
-        <Card className="mb-6 border-destructive">
+        <Card variant="destructive" className="mb-6">
           <CardHeader>
             <CardTitle className="text-base text-destructive">
               检测到疑似重复：库中已有内容高度重合的论文
@@ -180,57 +185,50 @@ export default function LibraryPage() {
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
             {dedup.exists_newer && (
-              <p className="rounded bg-muted p-2 text-destructive">
-                ⚠ 库中已有<strong>更新</strong>的版本，你上传的是较旧的版本 —— 一般建议保留库中那份。
-              </p>
+              <Alert variant="warning">
+                库中已有<strong>更新</strong>的版本，你上传的是较旧的版本 —— 一般建议保留库中那份。
+              </Alert>
             )}
             {dedup.candidates.map((c) => (
-              <div key={c.doc_id} className="rounded border p-3">
+              <Card key={c.doc_id} variant="flat" className="p-3">
                 <p className="font-medium">{c.filename}</p>
                 <p className="text-xs text-muted-foreground">
                   {dedup.metric} {Math.round(c.similarity * 100)}%（判据阈值{" "}
                   {Math.round(dedup.threshold * 100)}%）
                 </p>
                 <p className="mt-1 text-xs">{c.reason}</p>
-                <button
-                  type="button"
+                <Button
+                  variant="link"
+                  size="sm"
                   onClick={() => void showDiff(c.doc_id, c.existing_is_newer)}
-                  className="mt-2 text-xs underline"
                   disabled={busy}
+                  className="mt-2 h-auto p-0 text-xs"
                 >
                   查看两版主要差异
-                </button>
-              </div>
+                </Button>
+              </Card>
             ))}
             <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => void act("keep_both")}
-                className="rounded border px-3 py-1.5 text-sm disabled:opacity-50"
-              >
+              <Button variant="outline" disabled={busy} onClick={() => void act("keep_both")}>
                 保留两份
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
                 disabled={busy}
                 onClick={() => void act("replace_existing", dedup.candidates[0]?.doc_id)}
-                className="rounded border px-3 py-1.5 text-sm disabled:opacity-50"
               >
                 用新上传的替换库中旧版
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                variant="destructive-outline"
                 disabled={busy}
                 onClick={() => void act("discard_new")}
-                className="rounded border px-3 py-1.5 text-sm text-destructive disabled:opacity-50"
               >
                 放弃本次上传
-              </button>
+              </Button>
             </div>
 
             {diff && (
-              <div className="rounded bg-muted p-3 text-xs leading-relaxed">
+              <Card variant="flat" className="bg-muted/50 p-3 text-xs leading-relaxed">
                 <p className="mb-1 font-medium">
                   {diff.diff.old_label} → {diff.diff.new_label}
                   <span className="ml-2 font-normal text-muted-foreground">
@@ -238,7 +236,7 @@ export default function LibraryPage() {
                   </span>
                 </p>
                 <p className="whitespace-pre-wrap">{diff.summary || diff.fallback_summary}</p>
-              </div>
+              </Card>
             )}
           </CardContent>
         </Card>
@@ -246,51 +244,59 @@ export default function LibraryPage() {
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-[20rem_1fr]">
         <section>
-          <h2 className="mb-3 text-lg font-semibold">已入库（{items.length}）</h2>
+          <div className="section-label mb-3">已入库（{items.length}）</div>
           <ul className="space-y-2">
-            {items.map((m) => (
-              <li key={m.doc_id}>
-                <Card
-                  className={
-                    selected?.meta.doc_id === m.doc_id ? "border-primary" : undefined
-                  }
-                >
-                  <CardContent className="p-3">
-                    <button
-                      type="button"
-                      onClick={() => void open(m.doc_id)}
-                      className="w-full text-left"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Badge variant={m.doc_type === "scanned" ? "destructive" : "secondary"}>
-                          {m.doc_type === "scanned" ? "扫描件" : "文本层"}
-                        </Badge>
-                        <span className="text-xs text-muted-foreground">
-                          {m.page_count} 页 · {humanSize(m.size_bytes)}
-                        </span>
-                      </div>
-                      <p className="mt-1 text-sm font-medium">
-                        {m.title ?? m.filename}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {m.n_headings} 标题 · {m.n_references} 参考文献 · {m.n_math_lines} 公式行
-                      </p>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void remove(m.doc_id)}
-                      disabled={busy}
-                      className="mt-2 text-xs text-destructive underline disabled:opacity-50"
-                    >
-                      删除
-                    </button>
-                  </CardContent>
-                </Card>
-              </li>
-            ))}
+            {items.map((m) => {
+              const active = selected?.meta.doc_id === m.doc_id;
+              return (
+                <li key={m.doc_id}>
+                  <Card
+                    variant="interactive"
+                    className={active ? "border-primary/45 bg-primary/[0.03]" : undefined}
+                  >
+                    <CardContent className="p-3">
+                      <button
+                        type="button"
+                        onClick={() => void open(m.doc_id)}
+                        className="w-full text-left"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Badge variant={m.doc_type === "scanned" ? "warning" : "success"}>
+                            {m.doc_type === "scanned" ? "扫描件" : "文本层"}
+                          </Badge>
+                          <span className="tabular text-xs text-muted-foreground">
+                            {m.page_count} 页 · {humanSize(m.size_bytes)}
+                          </span>
+                        </div>
+                        <p className="mt-1.5 line-clamp-2 text-sm font-medium">
+                          {m.title ?? m.filename}
+                        </p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {m.n_headings} 标题 · {m.n_references} 参考文献 · {m.n_math_lines} 公式行
+                        </p>
+                      </button>
+                      <Button
+                        variant="link"
+                        size="sm"
+                        onClick={() => void remove(m.doc_id)}
+                        disabled={busy}
+                        className="mt-2 h-auto gap-1 p-0 text-xs text-destructive"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                        删除
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </li>
+              );
+            })}
             {items.length === 0 && (
-              <li className="text-sm text-muted-foreground">
-                还没有文献。上面传一份 PDF 试试。
+              <li>
+                <EmptyState
+                  icon={<FileText className="h-5 w-5" />}
+                  title="文献库还是空的"
+                  description="在上面传一份 PDF，解析完成后这里会出现标题树与表格。"
+                />
               </li>
             )}
           </ul>
@@ -298,7 +304,11 @@ export default function LibraryPage() {
 
         <section>
           {!selected ? (
-            <p className="text-sm text-muted-foreground">左侧点一篇，看解析出来的标题树。</p>
+            <EmptyState
+              icon={<FileText className="h-5 w-5" />}
+              title="还没有选中文献"
+              description="左侧点一篇，看解析出来的标题树、表格与章节正文。"
+            />
           ) : (
             <div className="space-y-4">
               <Card>
@@ -306,12 +316,12 @@ export default function LibraryPage() {
                   <CardTitle className="text-base">
                     {selected.meta.title ?? selected.meta.filename}
                   </CardTitle>
+                  <CardDescription>
+                    {selected.meta.authors.join("、") || "（未识别作者）"}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm">
-                  <p className="text-muted-foreground">
-                    {selected.meta.authors.join("、") || "（未识别作者）"}
-                  </p>
-                  <div className="flex flex-wrap gap-2 text-xs">
+                  <div className="flex flex-wrap gap-1.5">
                     <Badge variant="outline">{selected.meta.page_count} 页</Badge>
                     <Badge variant="outline">{selected.meta.n_headings} 标题</Badge>
                     <Badge variant="outline">{selected.meta.n_references} 参考文献</Badge>
@@ -319,15 +329,19 @@ export default function LibraryPage() {
                     <Badge variant="outline">解析 {selected.meta.parse_seconds}s</Badge>
                   </div>
                   {selected.meta.warnings.length > 0 && (
-                    <ul className="list-disc pl-5 text-xs text-destructive">
-                      {selected.meta.warnings.map((w) => (
-                        <li key={w}>{w}</li>
-                      ))}
-                    </ul>
+                    <Alert variant="warning" hideIcon>
+                      <ul className="list-disc pl-4 text-xs">
+                        {selected.meta.warnings.map((w) => (
+                          <li key={w}>{w}</li>
+                        ))}
+                      </ul>
+                    </Alert>
                   )}
                   {selected.abstract && (
                     <details className="text-xs text-muted-foreground">
-                      <summary className="cursor-pointer">摘要（{selected.meta.abstract_chars} 字符）</summary>
+                      <summary className="cursor-pointer transition hover:text-foreground">
+                        摘要（{selected.meta.abstract_chars} 字符）
+                      </summary>
                       <p className="mt-2 leading-relaxed">{selected.abstract}</p>
                     </details>
                   )}
@@ -357,7 +371,7 @@ export default function LibraryPage() {
                       </span>
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-5">
+                  <CardContent className="space-y-6">
                     {selected.tables!.map((t) => {
                       const header = t.rows[0] ?? [];
                       const body = t.rows.slice(1);
@@ -366,43 +380,36 @@ export default function LibraryPage() {
                         <div key={t.index} className="space-y-2">
                           <div className="flex flex-wrap items-center gap-2">
                             <Badge variant="secondary">Table {t.number ?? t.index}</Badge>
-                            <span className="text-xs text-muted-foreground">
+                            <span className="tabular text-xs text-muted-foreground">
                               第 {t.page} 页 · {t.n_rows}×{t.n_cols} · 置信度{" "}
                               {Math.round(t.confidence * 100)}%
                             </span>
                           </div>
-                          <p className="text-xs text-muted-foreground">{t.caption}</p>
-                          <div className="overflow-x-auto rounded border">
-                            <table className="w-full border-collapse text-xs">
-                              <thead className="bg-muted/60">
-                                <tr>
-                                  {Array.from({ length: width }).map((_, i) => (
-                                    <th
-                                      key={i}
-                                      className="whitespace-nowrap border-b px-2 py-1 text-left font-medium"
-                                    >
-                                      {header[i] ?? ""}
-                                    </th>
-                                  ))}
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {body.map((r, ri) => (
-                                  <tr key={ri} className="border-b last:border-0">
-                                    {Array.from({ length: width }).map((_, ci) => (
-                                      <td key={ci} className="px-2 py-1 align-top">
-                                        {r[ci] ?? ""}
-                                      </td>
-                                    ))}
-                                  </tr>
+                          {t.caption && (
+                            <p className="text-xs leading-relaxed text-muted-foreground">{t.caption}</p>
+                          )}
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                {Array.from({ length: width }).map((_, i) => (
+                                  <TableHead key={i}>{header[i] ?? ""}</TableHead>
                                 ))}
-                              </tbody>
-                            </table>
-                          </div>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {body.map((r, ri) => (
+                                <TableRow key={ri}>
+                                  {Array.from({ length: width }).map((_, ci) => (
+                                    <TableCell key={ci}>{r[ci] ?? ""}</TableCell>
+                                  ))}
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
                           {t.confidence < 0.7 && (
-                            <p className="text-xs text-destructive">
+                            <Alert variant="warning" className="py-2 text-xs">
                               结构置信度偏低，单元格可能有错位（见技术文档已知限制）
-                            </p>
+                            </Alert>
                           )}
                         </div>
                       );

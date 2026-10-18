@@ -13,26 +13,22 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
  * ★为什么要抽这一层：改造前 7 个页面各自手写 <header> + 一套 <nav>，
  *   容器宽度有 3xl/4xl/5xl/6xl 四种，导航文案也不一致（首页还把"写作"写了两遍）。
  *   页面之间点来点去，内容宽度和顶栏位置都在跳 —— 这是"看着不专业"最直接的来源。
+ *
+ * 全屏工作台（图谱 / 阅读器详情）不套 SiteShell 的 <main> 与页脚，
+ * 但顶栏必须用同一个 SiteHeader —— 否则一进工作台导航就消失。
  */
 const NAV = [
   { href: "/", label: "首页" },
-  { href: "/library", label: "文献库", hint: "M1 解析" },
-  { href: "/ask", label: "问答", hint: "M2 抗幻觉" },
-  { href: "/reader", label: "阅读器", hint: "M3 联动" },
-  { href: "/graph", label: "图谱", hint: "M5 引用" },
-  { href: "/write", label: "写作", hint: "M6 出图" },
+  { href: "/library", label: "文献库" },
+  { href: "/ask", label: "问答" },
+  { href: "/reader", label: "阅读器" },
+  { href: "/graph", label: "图谱" },
+  { href: "/write", label: "写作" },
 ];
 
 type Health = { status: string; version: string; llm_provider: string; llm_configured: boolean };
 
-export function SiteShell({
-  children,
-  width = "wide",
-}: {
-  children: React.ReactNode;
-  /** wide = 六栏内容页；narrow = 阅读/问答这类单列长文 */
-  width?: "wide" | "narrow";
-}) {
+export function SiteHeader() {
   const pathname = usePathname();
   const [health, setHealth] = useState<Health | null>(null);
   const [down, setDown] = useState(false);
@@ -49,50 +45,62 @@ export function SiteShell({
   }, []);
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="site-header">
-        <div className="container-page flex h-14 items-center gap-6">
-          {/* 品牌标记：一个实心方块 + 内嵌细线，表达"论文 → 结构化" */}
-          <Link href="/" className="flex shrink-0 items-center gap-2.5">
-            <span className="relative flex h-7 w-7 items-center justify-center rounded-md bg-primary">
-              <span className="h-2.5 w-2.5 rounded-[2px] border border-primary-foreground/90" />
-            </span>
-            <span className="text-[15px] font-semibold tracking-tight">科研助手</span>
-          </Link>
+    <header className="site-header">
+      <div className="container-page flex h-14 items-center gap-5">
+        {/* 品牌标记：一个实心方块 + 内嵌细线，表达"论文 → 结构化" */}
+        <Link href="/" className="flex shrink-0 items-center gap-2.5">
+          <span className="relative flex h-7 w-7 items-center justify-center rounded-md bg-primary">
+            <span className="h-2.5 w-2.5 rounded-[2px] border border-primary-foreground/90" />
+          </span>
+          <span className="text-[15px] font-semibold tracking-tight">科研助手</span>
+        </Link>
 
-          <nav className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
-            {NAV.map((item) => {
-              const active =
-                item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "shrink-0 rounded-lg px-3 py-1.5 text-[13.5px] transition-colors",
-                    active
-                      ? "bg-primary/10 font-medium text-primary"
-                      : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
-                  )}
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
+        <nav className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto">
+          {NAV.map((item) => {
+            const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "shrink-0 rounded-lg px-3 py-1.5 text-[13.5px] transition-colors",
+                  active
+                    ? "bg-primary/10 font-medium text-primary"
+                    : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
+                )}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
 
-          {/* 服务状态：一个点就够，不再往页面上摊 JSON */}
-          <div className="hidden shrink-0 items-center gap-2 text-[12px] text-muted-foreground sm:flex">
-            <span
-              className={cn(
-                "h-1.5 w-1.5 rounded-full",
-                health ? "bg-success" : down ? "bg-destructive" : "bg-muted-foreground/40",
-              )}
-            />
-            {health ? "服务正常" : down ? "服务未连接" : "连接中"}
-          </div>
+        {/* 服务状态：一个点就够，不再往页面上摊 JSON */}
+        <div className="hidden shrink-0 items-center gap-2 text-[12px] text-muted-foreground sm:flex">
+          <span
+            className={cn(
+              "h-1.5 w-1.5 rounded-full",
+              health ? "bg-success" : down ? "bg-destructive" : "bg-muted-foreground/40",
+            )}
+          />
+          {health ? "服务正常" : down ? "服务未连接" : "连接中"}
         </div>
-      </header>
+      </div>
+    </header>
+  );
+}
+
+export function SiteShell({
+  children,
+  width = "wide",
+}: {
+  children: React.ReactNode;
+  /** wide = 六栏内容页；narrow = 阅读/问答这类单列长文 */
+  width?: "wide" | "narrow";
+}) {
+  return (
+    <div className="flex min-h-screen flex-col">
+      <SiteHeader />
 
       <main
         className={cn(

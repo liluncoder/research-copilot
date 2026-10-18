@@ -3,6 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { Alert } from "@/components/ui/alert";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
+import { SiteHeader } from "@/components/site-shell";
 import {
   getReader,
   listDocuments,
@@ -19,14 +23,17 @@ function renderWithCitations(text: string, onCite: (n: number) => void) {
   let m: RegExpExecArray | null;
   while ((m = re.exec(text)) !== null) {
     if (m.index > last) out.push(<span key={`t${last}`}>{text.slice(last, m.index)}</span>);
-    const nums = m[1].split(/\s*[,–-]\s*/).map((s) => parseInt(s, 10)).filter((n) => !Number.isNaN(n));
+    const nums = m[1]
+      .split(/\s*[,–-]\s*/)
+      .map((s) => parseInt(s, 10))
+      .filter((n) => !Number.isNaN(n));
     out.push(
       <button
         key={`c${m.index}`}
         type="button"
         onClick={() => nums[0] && onCite(nums[0])}
         title={`跳到参考文献 ${nums.join(", ")}`}
-        className="mx-[1px] inline-flex translate-y-[-2px] items-center rounded border border-primary/25 bg-primary/10 px-1 font-mono text-[10px] leading-4 text-primary hover:bg-primary/20"
+        className="mx-[1px] inline-flex translate-y-[-2px] items-center rounded border border-primary/25 bg-primary/10 px-1 font-mono text-[10px] leading-4 text-primary transition-colors hover:bg-primary/20"
       >
         {m[1].replace(/\s+/g, "")}
       </button>,
@@ -63,6 +70,7 @@ export default function ReaderPage() {
     if (!docId) return;
     setView(null);
     setZh({});
+    setErr(null);
     askedSections.current = new Set();
     getReader(docId).then(setView).catch((e) => setErr(String(e)));
     listDocuments().then((r) => setDocs(r.items)).catch(() => {});
@@ -166,77 +174,80 @@ export default function ReaderPage() {
 
   if (err) {
     return (
-      <main className="mx-auto max-w-3xl px-6 py-16">
-        <p className="text-sm text-destructive">读取失败：{err}</p>
-        <Link href="/library" className="mt-4 inline-block text-sm text-primary underline">
-          回文献库
-        </Link>
-      </main>
+      <div className="flex min-h-screen flex-col">
+        <SiteHeader />
+        <main className="container-page py-16">
+          <Alert variant="destructive">读取失败：{err}</Alert>
+          <Link
+            href="/library"
+            className={buttonVariants({ variant: "outline", size: "sm" }) + " mt-4"}
+          >
+            回文献库
+          </Link>
+        </main>
+      </div>
     );
   }
 
   if (!view) {
     return (
-      <main className="mx-auto max-w-3xl px-6 py-16 text-sm text-muted-foreground">
-        正在载入阅读视图…
-      </main>
+      <div className="flex min-h-screen flex-col">
+        <SiteHeader />
+        <main className="container-page py-16 text-sm text-muted-foreground">正在载入阅读视图…</main>
+      </div>
     );
   }
 
   const highlight = new Set(activeRef !== null ? view.cited_by[String(activeRef)] ?? [] : []);
 
   return (
-    <main className="flex h-screen flex-col">
-      <header className="site-header flex flex-wrap items-center gap-3 px-5 py-2.5">
-        <Link href="/library" className="text-sm text-muted-foreground hover:text-foreground">
-          ← 文献库
-        </Link>
+    <div className="flex h-screen flex-col">
+      <SiteHeader />
+
+      <div className="toolbar">
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-sm font-medium">{view.meta.title ?? view.meta.filename}</h1>
+          <h1 className="truncate text-[13px] font-medium">{view.meta.title ?? view.meta.filename}</h1>
           <p className="truncate text-[11px] text-muted-foreground">
             {view.stats.n_sections} 节 · {view.stats.n_paragraphs} 段 ·{" "}
             {view.stats.n_citation_marks} 处引用 · {view.stats.n_refs_cited}/{view.stats.n_references}{" "}
             条参考文献被引
           </p>
         </div>
-        <select
+        <Select
           value={docId}
+          aria-label="切换文献"
           onChange={(e) => {
             window.location.href = `/reader/${e.target.value}`;
           }}
-          className="h-8 rounded-md border border-border/70 bg-transparent px-2 text-xs outline-none"
+          className="max-w-[15rem]"
         >
           {docs.map((d) => (
-            <option key={d.doc_id} value={d.doc_id} className="bg-background">
+            <option key={d.doc_id} value={d.doc_id} className="bg-card">
               {d.title ?? d.filename}
             </option>
           ))}
-        </select>
-        <button
-          type="button"
+        </Select>
+        <Button
+          variant={showZh ? "selected" : "outline"}
+          size="sm"
+          aria-pressed={showZh}
           onClick={() => setShowZh((v) => !v)}
-          className={`h-8 rounded-md border px-3 text-xs transition ${
-            showZh ? "border-primary/40 bg-primary/10 text-primary" : "border-border/70 text-muted-foreground"
-          }`}
         >
-          {showZh ? "中文对照：开" : "中文对照：关"}
-        </button>
-        <button
-          type="button"
+          中文对照：{showZh ? "开" : "关"}
+        </Button>
+        <Button
+          variant={syncOn ? "selected" : "outline"}
+          size="sm"
+          aria-pressed={syncOn}
           onClick={() => setSyncOn((v) => !v)}
-          className={`h-8 rounded-md border px-3 text-xs transition ${
-            syncOn ? "border-primary/40 bg-primary/10 text-primary" : "border-border/70 text-muted-foreground"
-          }`}
         >
-          {syncOn ? "联动滚动：开" : "联动滚动：关"}
-        </button>
-      </header>
+          联动滚动：{syncOn ? "开" : "关"}
+        </Button>
+      </div>
 
-      <div className="grid min-h-0 flex-1 grid-cols-[15rem_1fr]">
-        <aside className="min-h-0 overflow-auto border-r border-border/60 px-3 py-4">
-          <p className="mb-2 px-2 text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
-            标题树
-          </p>
+      <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[15rem_1fr]">
+        <aside className="hidden min-h-0 overflow-auto border-r border-border/60 px-3 py-4 md:block">
+          <div className="section-label mb-2 px-2">标题树</div>
           <ul className="space-y-0.5">
             {view.sections.map((s) => {
               const target = s.nav_para_id;
@@ -246,7 +257,7 @@ export default function ReaderPage() {
                     type="button"
                     disabled={!target}
                     onClick={() => target && jumpToPara(target)}
-                    className={`w-full truncate rounded px-2 py-1 text-left text-[12px] transition hover:bg-muted/40 hover:text-foreground ${
+                    className={`w-full truncate rounded-md px-2 py-1 text-left text-[12px] transition-colors hover:bg-muted/40 hover:text-foreground ${
                       s.n_paragraphs === 0 ? "text-muted-foreground/60" : "text-muted-foreground"
                     }`}
                     style={{ paddingLeft: `${8 + (s.level - 1) * 10}px` }}
@@ -261,12 +272,12 @@ export default function ReaderPage() {
         </aside>
 
         <div className="flex min-h-0 flex-col">
-          <div className={`grid min-h-0 flex-1 ${showZh ? "grid-cols-2 divide-x divide-border/60" : "grid-cols-1"}`}>
-            <div
-              ref={leftRef}
-              onScroll={onLeftScroll}
-              className="relative min-h-0 overflow-auto px-8 py-6"
-            >
+          <div
+            className={`grid min-h-0 flex-1 ${
+              showZh ? "grid-cols-1 divide-y divide-border/60 md:grid-cols-2 md:divide-x md:divide-y-0" : "grid-cols-1"
+            }`}
+          >
+            <div ref={leftRef} onScroll={onLeftScroll} className="relative min-h-0 overflow-auto px-5 py-6 sm:px-8">
               {view.paragraphs.map((p, i) => {
                 const showSection = i === 0 || view.paragraphs[i - 1].section !== p.section;
                 return (
@@ -292,11 +303,9 @@ export default function ReaderPage() {
               <div
                 ref={rightRef}
                 onScroll={() => syncScroll("right")}
-                className="relative min-h-0 overflow-auto px-8 py-6"
+                className="relative min-h-0 overflow-auto px-5 py-6 sm:px-8"
               >
-                {busyZh && (
-                  <p className="mb-3 text-[11px] text-muted-foreground">正在翻译本节…</p>
-                )}
+                {busyZh && <p className="mb-3 text-[11px] text-muted-foreground">正在翻译本节…</p>}
                 {view.paragraphs.map((p, i) => {
                   const showSection = i === 0 || view.paragraphs[i - 1].section !== p.section;
                   return (
@@ -322,17 +331,16 @@ export default function ReaderPage() {
 
           <div className="border-t border-border/60">
             <div className="flex items-center justify-between px-5 py-2">
-              <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
-                参考文献（点击可反查正文）
-              </p>
+              <div className="section-label">参考文献（点击可反查正文）</div>
               {activeRef !== null && (
-                <button
-                  type="button"
+                <Button
+                  variant="link"
+                  size="sm"
                   onClick={() => setActiveRef(null)}
-                  className="text-[11px] text-primary underline"
+                  className="h-auto p-0 text-[11px]"
                 >
                   清除高亮 [{activeRef}]
-                </button>
+                </Button>
               )}
             </div>
             <div ref={refsRef} className="relative max-h-40 overflow-auto px-5 pb-4">
@@ -345,7 +353,7 @@ export default function ReaderPage() {
                         setActiveRef(r.index);
                         if (r.cited_in[0]) jumpToPara(r.cited_in[0]);
                       }}
-                      className={`flex w-full gap-2 rounded px-2 py-1 text-left text-[12px] transition ${
+                      className={`flex w-full gap-2 rounded-md px-2 py-1 text-left text-[12px] transition-colors ${
                         activeRef === r.index
                           ? "bg-primary/10 text-foreground"
                           : "text-muted-foreground hover:bg-muted/30"
@@ -366,6 +374,6 @@ export default function ReaderPage() {
           </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

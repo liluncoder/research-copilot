@@ -1,15 +1,24 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
+import { Loader2, Sparkles } from "lucide-react";
 import { getGraph, reviewGraph, type GraphData, type GraphNode } from "@/lib/api";
+import { SiteHeader } from "@/components/site-shell";
+import { Alert } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Segmented } from "@/components/ui/segmented";
 
 type Metric = "pagerank_core" | "cited_by_local";
 
-const LOCAL_COLOR = "#85B7EB";
-const EXT_COLOR = "#B4B2A9";
-const LOCAL_EDGE = "#5DCAA5";
-const EXT_EDGE = "rgba(140,140,135,0.35)";
+/*
+ * ★浅色主题的图谱配色：原来节点标签写死 #D3D1C7（深色底上的浅字），
+ *   切到暖白底后标签几乎看不见。现在主色/成功色与站点 token 对齐。
+ */
+const LOCAL_COLOR = "#3E498E";
+const EXT_COLOR = "#B9B6AD";
+const LOCAL_EDGE = "#2F6A5E";
+const EXT_EDGE = "rgba(120,118,112,0.35)";
+const LABEL_COLOR = "#52525B";
 
 export default function GraphPage() {
   const [data, setData] = useState<GraphData | null>(null);
@@ -76,13 +85,13 @@ export default function GraphPage() {
           itemStyle: {
             color: n.in_library ? LOCAL_COLOR : EXT_COLOR,
             opacity: active ? 1 : 0.15,
-            borderColor: n.id === selected ? "#5DCAA5" : "transparent",
+            borderColor: n.id === selected ? LOCAL_EDGE : "transparent",
             borderWidth: n.id === selected ? 2 : 0,
           },
           label: {
             show: n.in_library || topIds.has(n.id) || n.id === selected,
             formatter: n.label.length > 26 ? `${n.label.slice(0, 26)}…` : n.label,
-            color: "#D3D1C7",
+            color: LABEL_COLOR,
             fontSize: 11,
           },
           raw: n,
@@ -90,13 +99,12 @@ export default function GraphPage() {
       });
 
       const links = data.display.edges.map((e) => {
-        const active =
-          !neighbors || (neighbors.has(e.source) && neighbors.has(e.target));
+        const active = !neighbors || (neighbors.has(e.source) && neighbors.has(e.target));
         return {
           source: e.source,
           target: e.target,
           lineStyle: {
-            color: active ? (neighbors ? LOCAL_EDGE : EXT_EDGE) : "rgba(140,140,135,0.08)",
+            color: active ? (neighbors ? LOCAL_EDGE : EXT_EDGE) : "rgba(120,118,112,0.08)",
             width: active ? 1.2 : 0.6,
             curveness: 0.08,
           },
@@ -111,16 +119,19 @@ export default function GraphPage() {
       chart.setOption(
         {
           backgroundColor: "transparent",
+          textStyle: { color: LABEL_COLOR },
+          // 浅色主题下用白底 tooltip；深色 tooltip 在暖白页面里像一块补丁
           tooltip: {
-            backgroundColor: "#1b1d21",
-            borderColor: "#33363b",
-            textStyle: { color: "#e8e8e6", fontSize: 12 },
+            backgroundColor: "#ffffff",
+            borderColor: "#E7E4DE",
+            textStyle: { color: "#26282D", fontSize: 12 },
+            extraCssText: "box-shadow:0 6px 20px rgba(24,24,27,.10);border-radius:10px;",
             formatter: (p: { data?: { raw?: GraphNode } }) => {
               const n = p.data?.raw;
               if (!n) return "";
               return [
                 `<div style="max-width:320px;white-space:normal;line-height:1.5">${n.label}</div>`,
-                `<div style="color:#9aa0a6;margin-top:4px">${n.in_library ? "库内文献" : "外部文献"}${
+                `<div style="color:#6B7280;margin-top:4px">${n.in_library ? "库内文献" : "外部文献"}${
                   n.year ? ` · ${n.year}` : ""
                 }</div>`,
                 `<div style="margin-top:4px">被本库引用 <b>${n.cited_by_local}</b> 次 · 引用他人 <b>${n.cites}</b> 篇</div>`,
@@ -174,57 +185,51 @@ export default function GraphPage() {
     }
   }
 
-  const ranking = data ? (metric === "pagerank_core" ? data.foundational.pagerank : data.foundational.in_degree) : [];
+  const ranking = data
+    ? metric === "pagerank_core"
+      ? data.foundational.pagerank
+      : data.foundational.in_degree
+    : [];
 
   return (
-    <main className="flex h-screen flex-col">
-      <header className="site-header flex flex-wrap items-center gap-3 px-5 py-2.5">
-        <Link href="/" className="text-sm text-muted-foreground hover:text-foreground">
-          ← 首页
-        </Link>
+    <div className="flex h-screen flex-col">
+      <SiteHeader />
+
+      <div className="toolbar">
         <div className="min-w-0 flex-1">
-          <h1 className="text-sm font-medium">引用图谱</h1>
+          <h1 className="text-[13px] font-medium">引用图谱</h1>
           <p className="truncate text-[11px] text-muted-foreground">
             {data
               ? `${data.stats.n_nodes} 节点 / ${data.stats.n_edges} 边 · 库内 ${data.stats.n_local} 篇 · 参考文献 ${data.stats.n_reference_entries} 条 · 匹配到库内 ${data.stats.n_matched_to_local} 条（${(data.stats.local_match_rate * 100).toFixed(1)}%）`
               : "载入中…"}
           </p>
         </div>
-        <div className="flex overflow-hidden rounded-md border border-border/70 text-xs">
-          {(
-            [
-              ["pagerank_core", "PageRank"],
-              ["cited_by_local", "入度"],
-            ] as [Metric, string][]
-          ).map(([k, label]) => (
-            <button
-              key={k}
-              type="button"
-              onClick={() => setMetric(k)}
-              className={`px-3 py-1.5 transition ${
-                metric === k ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-        <button
-          type="button"
-          onClick={() => void makeReview()}
-          disabled={busy}
-          className="h-8 rounded-md border border-primary/40 bg-primary/10 px-3 text-xs text-primary transition hover:bg-primary/20 disabled:opacity-40"
-        >
+        <Segmented
+          size="sm"
+          label="排序指标"
+          value={metric}
+          onChange={(v) => setMetric(v as Metric)}
+          options={[
+            { value: "pagerank_core", label: "PageRank" },
+            { value: "cited_by_local", label: "入度" },
+          ]}
+        />
+        <Button variant="selected" size="sm" onClick={() => void makeReview()} disabled={busy}>
+          {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
           {busy ? "生成中…" : "生成自动综述"}
-        </button>
-      </header>
+        </Button>
+      </div>
 
-      {err && <p className="px-5 py-3 text-sm text-destructive">{err}</p>}
+      {err && (
+        <Alert variant="destructive" className="m-3">
+          {err}
+        </Alert>
+      )}
 
-      <div className="grid min-h-0 flex-1 grid-cols-[1fr_20rem]">
+      <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[1fr_20rem]">
         <div className="relative min-h-0">
           <div ref={boxRef} className="h-full w-full" />
-          <div className="pointer-events-none absolute bottom-4 left-4 flex gap-4 text-[11px] text-muted-foreground">
+          <div className="pointer-events-none absolute bottom-4 left-4 flex flex-wrap gap-4 rounded-lg bg-card/80 px-3 py-2 text-[11px] text-muted-foreground backdrop-blur-sm">
             <span className="flex items-center gap-1.5">
               <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: LOCAL_COLOR }} />
               库内文献
@@ -237,25 +242,30 @@ export default function GraphPage() {
           </div>
         </div>
 
-        <aside className="min-h-0 overflow-auto border-l border-border/60 px-4 py-4">
-          <p className="mb-2 text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+        <aside className="hidden min-h-0 overflow-auto border-l border-border/60 px-4 py-4 lg:block">
+          <div className="section-label mb-2">
             基石论文 · {metric === "pagerank_core" ? "PageRank(核心)" : "被本库引用"}
-          </p>
+          </div>
           <ol className="space-y-1">
             {ranking.slice(0, 10).map((n, i) => (
               <li key={n.id}>
                 <button
                   type="button"
                   onClick={() => setSelected(selected === n.id ? null : n.id)}
-                  className={`flex w-full gap-2 rounded px-2 py-1.5 text-left text-[12px] transition ${
-                    selected === n.id ? "bg-primary/10 text-foreground" : "text-muted-foreground hover:bg-muted/30"
+                  className={`flex w-full gap-2 rounded-lg px-2 py-1.5 text-left text-[12px] transition-colors ${
+                    selected === n.id
+                      ? "bg-primary/10 text-foreground"
+                      : "text-muted-foreground hover:bg-muted/40"
                   }`}
                 >
-                  <span className="w-4 shrink-0 font-mono text-[10px] text-muted-foreground/60">{i + 1}</span>
+                  <span className="w-4 shrink-0 font-mono text-[10px] text-muted-foreground/60">
+                    {i + 1}
+                  </span>
                   <span className="flex-1">
                     <span className="line-clamp-2">{n.label}</span>
                     <span className="mt-0.5 block font-mono text-[10px] text-muted-foreground/70">
-                      {n.in_library ? "库内" : "外部"} · 入度 {n.cited_by_local} · PR {n.pagerank_core.toFixed(4)}
+                      {n.in_library ? "库内" : "外部"} · 入度 {n.cited_by_local} · PR{" "}
+                      {n.pagerank_core.toFixed(4)}
                       {n.year ? ` · ${n.year}` : ""}
                     </span>
                   </span>
@@ -270,9 +280,7 @@ export default function GraphPage() {
 
           {(review || busy) && (
             <div className="mt-4 border-t border-border/50 pt-3">
-              <p className="mb-2 text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
-                自动综述
-              </p>
+              <div className="section-label mb-2">自动综述</div>
               <p className="whitespace-pre-wrap text-[12px] leading-6 text-foreground/85">
                 {busy ? "正在依据图谱统计生成…" : review}
               </p>
@@ -283,6 +291,6 @@ export default function GraphPage() {
           )}
         </aside>
       </div>
-    </main>
+    </div>
   );
 }

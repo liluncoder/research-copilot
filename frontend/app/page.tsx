@@ -13,7 +13,9 @@ import {
   Upload,
 } from "lucide-react";
 import { SiteShell } from "@/components/site-shell";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 /**
  * 首页。
@@ -104,17 +106,13 @@ export default function Home() {
         </p>
 
         <div className="mt-7 flex flex-wrap gap-3">
-          <Link href="/ask">
-            <Button size="lg">
-              开始提问
-              <ArrowRight className="h-4 w-4" />
-            </Button>
+          <Link href="/ask" className={buttonVariants({ size: "lg" })}>
+            开始提问
+            <ArrowRight className="h-4 w-4" />
           </Link>
-          <Link href="/library">
-            <Button size="lg" variant="outline">
-              <Upload className="h-4 w-4" />
-              上传文献
-            </Button>
+          <Link href="/library" className={buttonVariants({ size: "lg", variant: "outline" })}>
+            <Upload className="h-4 w-4" />
+            上传文献
           </Link>
         </div>
       </section>
@@ -124,13 +122,10 @@ export default function Home() {
         <div className="section-label mb-3">判据完成情况</div>
         <div className="surface flex flex-wrap items-center gap-2 p-4">
           {JUDGES.map((j) => (
-            <span
-              key={j}
-              className="inline-flex items-center gap-1 rounded-md bg-success/10 px-2.5 py-1 text-[12px] font-medium text-success"
-            >
+            <Badge key={j} variant="success" className="gap-1 text-[12px]">
               <Check className="h-3 w-3" strokeWidth={3} />
               {j}
-            </span>
+            </Badge>
           ))}
           <span className="ml-auto text-[12px] text-muted-foreground">
             每条都有可复跑的判据脚本，不靠口头声明
@@ -150,9 +145,9 @@ export default function Home() {
             const Icon = m.icon;
             return (
               <Link key={m.id} href={m.href} className="group">
-                <div className="surface surface-hover flex h-full flex-col p-5">
+                <Card variant="interactive" className="flex h-full flex-col p-5">
                   <div className="mb-3 flex items-start justify-between">
-                    <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/8 text-primary">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
                       <Icon className="h-[18px] w-[18px]" />
                     </span>
                     <span className="text-[11px] font-medium tabular text-muted-foreground/70">
@@ -184,7 +179,7 @@ export default function Home() {
                     )}
                     <ArrowRight className="ml-auto h-3.5 w-3.5 text-muted-foreground/40 transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
                   </div>
-                </div>
+                </Card>
               </Link>
             );
           })}

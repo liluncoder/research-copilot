@@ -1,8 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import { BarChart3, FileUp, Languages, Loader2 } from "lucide-react";
 import { PageHeader, SiteShell } from "@/components/site-shell";
+import { Alert } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Input } from "@/components/ui/input";
+import { Segmented } from "@/components/ui/segmented";
 import {
   buildFramework,
   makeFigure,
@@ -21,7 +28,11 @@ export default function WritePage() {
   // ---- J7 ----
   const [fig, setFig] = useState<FigureResult | null>(null);
   const chartBox = useRef<HTMLDivElement>(null);
-  const chartInst = useRef<{ setOption: (o: unknown, n?: boolean) => void; resize: () => void; dispose: () => void } | null>(null);
+  const chartInst = useRef<{
+    setOption: (o: unknown, n?: boolean) => void;
+    resize: () => void;
+    dispose: () => void;
+  } | null>(null);
 
   // ---- J8 ----
   const [topic, setTopic] = useState("局部学习规则在脉冲神经网络中的信用分配");
@@ -33,7 +44,12 @@ export default function WritePage() {
     setErr(null);
     setFig(null);
     try {
-      const r = await makeFigure(blob, { metric: "correct", groupBy: "condition", kind: "line", filename: name });
+      const r = await makeFigure(blob, {
+        metric: "correct",
+        groupBy: "condition",
+        kind: "line",
+        filename: name,
+      });
       setFig(r);
     } catch (e) {
       setErr(String(e));
@@ -51,7 +67,12 @@ export default function WritePage() {
       const inst = chartInst.current ?? (echarts.init(chartBox.current) as never);
       chartInst.current = inst as never;
       (inst as { setOption: (o: unknown, n?: boolean) => void }).setOption(
-        { ...fig.chart, backgroundColor: "transparent", textStyle: { color: "#d8d8d5" } },
+        {
+          ...fig.chart,
+          backgroundColor: "transparent",
+          // ★浅色主题：原来写死 #d8d8d5（深色主题的灰白字），在白底上几乎看不见
+          textStyle: { color: "#3f3f46" },
+        },
         true,
       );
       (inst as { resize: () => void }).resize();
@@ -93,165 +114,201 @@ export default function WritePage() {
 
   return (
     <SiteShell width="narrow">
-      <PageHeader title="写作 Copilot" desc="数据出图，图注只依据统计量；论文框架的参考文献只从库内选，编造一条都算失败。" />
+      <PageHeader
+        title="写作 Copilot"
+        desc="数据出图，图注只依据统计量；论文框架的参考文献只从库内选，编造一条都算失败。"
+      />
 
-        <div className="mb-6 flex gap-1 rounded-lg border border-border/60 p-1 text-sm">
-          {(
-            [
-              ["figure", "图表 + 图注（J7）"],
-              ["framework", "论文框架（J8）"],
-            ] as [Tab, string][]
-          ).map(([k, label]) => (
-            <button
-              key={k}
-              type="button"
-              onClick={() => setTab(k)}
-              className={`flex-1 rounded-md px-3 py-2 transition ${
-                tab === k ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+      <Segmented
+        fullWidth
+        label="写作功能"
+        value={tab}
+        onChange={(v) => setTab(v as Tab)}
+        options={[
+          { value: "figure", label: "图表 + 图注（J7）" },
+          { value: "framework", label: "论文框架（J8）" },
+        ]}
+        className="mb-6"
+      />
 
-        {err && <p className="mb-4 rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-2 text-sm">{err}</p>}
+      {err && (
+        <Alert variant="destructive" className="mb-4">
+          {err}
+        </Alert>
+      )}
 
-        {tab === "figure" && (
-          <section className="space-y-4">
-            <div className="flex flex-wrap items-center gap-3 text-sm">
-              <input
+      {tab === "figure" && (
+        <section className="space-y-4">
+          <Card className="p-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <Input
                 type="file"
                 accept=".csv,text/csv"
+                aria-label="上传 CSV"
                 onChange={(e) => {
                   const f = e.target.files?.[0];
                   if (f) void runFigure(f, f.name);
                 }}
-                className="text-xs file:mr-3 file:rounded-md file:border-0 file:bg-primary/15 file:px-3 file:py-1.5 file:text-primary"
+                className="h-9 w-auto max-w-full cursor-pointer py-1.5 text-xs file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-1 file:text-[12px] file:text-foreground/80 hover:file:bg-muted/70"
               />
-              <button
-                type="button"
+              <Button
+                variant="subtle"
+                size="sm"
+                disabled={busy}
                 onClick={async () => {
                   const r = await fetch("/sample_snn_trials.csv");
                   void runFigure(await r.blob(), "snn_trials.csv");
                 }}
-                className="rounded-md border border-border/70 px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
               >
+                <FileUp className="h-3.5 w-3.5" />
                 用示例数据（SNN 仿真 640 次 trial）
-              </button>
-              {busy && <span className="text-xs text-muted-foreground">处理中…</span>}
+              </Button>
+              {busy && (
+                <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  处理中…
+                </span>
+              )}
             </div>
+          </Card>
 
-            {fig && (
-              <>
-                <div ref={chartBox} className="h-[320px] w-full rounded-xl border border-border/60" />
-                <div className="rounded-xl border border-border/60 px-5 py-4">
-                  <p className="mb-2 text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+          {fig && (
+            <>
+              <Card className="p-2">
+                <div ref={chartBox} className="h-[320px] w-full" />
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
                     图注（仅依据统计量生成）
-                  </p>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
                   <p className="text-[14px] leading-7">{fig.caption || "（未配置 LLM，图注为空）"}</p>
-                </div>
-                <details className="rounded-xl border border-border/60 px-5 py-3">
-                  <summary className="cursor-pointer text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+                </CardContent>
+              </Card>
+              <Card>
+                <details className="group px-5 py-3">
+                  <summary className="cursor-pointer list-none text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
                     喂给模型的统计量（可核对）
+                    <span className="ml-1 inline-block transition group-open:rotate-90">›</span>
                   </summary>
                   <pre className="mt-3 overflow-auto text-[11px] leading-5 text-muted-foreground">
                     {JSON.stringify(fig.stats, null, 2)}
                   </pre>
                 </details>
-              </>
-            )}
-            {!fig && !busy && (
-              <p className="text-sm text-muted-foreground">
-                上传一份 CSV（需要数值列），或点上面的示例数据。CSV 的每一行都会被统计，图注只能看到统计量。
-              </p>
-            )}
-          </section>
-        )}
+              </Card>
+            </>
+          )}
 
-        {tab === "framework" && (
-          <section className="space-y-4">
-            <div className="flex gap-2">
-              <input
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
-                className="h-10 flex-1 rounded-lg border border-border/70 bg-transparent px-3 text-sm outline-none focus:border-primary/60"
-                placeholder="论文主题"
-              />
-              <button
-                type="button"
-                onClick={() => void runFramework()}
-                disabled={busy || topic.trim().length < 2}
-                className="h-10 rounded-lg bg-primary px-5 text-sm font-medium text-primary-foreground disabled:opacity-40"
-              >
-                {busy ? "生成中" : "生成框架"}
-              </button>
-            </div>
+          {!fig && !busy && (
+            <EmptyState
+              icon={<BarChart3 className="h-5 w-5" />}
+              title="还没有生成图表"
+              description="上传一份 CSV（需要数值列），或点上面的示例数据。CSV 的每一行都会被统计，图注只能看到统计量。"
+            />
+          )}
+        </section>
+      )}
 
-            {fw && (
-              <div className="space-y-4">
-                <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-                  <span className="rounded-full border border-border/70 px-2 py-0.5">
-                    候选 {fw.n_candidates} 篇
-                  </span>
-                  <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-primary">
-                    引用 {fw.references.length} 条 · 全部来自库内
-                  </span>
-                  {fw.invalid_refs.length > 0 ? (
-                    <span className="rounded-full border border-destructive/40 bg-destructive/10 px-2 py-0.5 text-destructive">
-                      剔除编造引用 {fw.invalid_refs.length} 条
-                    </span>
-                  ) : (
-                    <span className="rounded-full border border-border/70 px-2 py-0.5">零编造</span>
-                  )}
-                </div>
+      {tab === "framework" && (
+        <section className="space-y-4">
+          <div className="flex gap-2">
+            <Input
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+              placeholder="论文主题"
+              aria-label="论文主题"
+            />
+            <Button
+              onClick={() => void runFramework()}
+              disabled={busy || topic.trim().length < 2}
+              className="shrink-0"
+            >
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              {busy ? "生成中" : "生成框架"}
+            </Button>
+          </div>
 
-                {Object.entries(fw.sections).map(([name, text]) => (
-                  <article key={name} className="rounded-xl border border-border/60 px-5 py-4">
-                    <h2 className="mb-2 text-sm font-medium">{name}</h2>
-                    <p className="whitespace-pre-wrap text-[14px] leading-7 text-foreground/85">{text}</p>
-                  </article>
-                ))}
+          {fw && (
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant="outline">候选 {fw.n_candidates} 篇</Badge>
+                <Badge variant="success">
+                  引用 {fw.references.length} 条 · 全部来自库内
+                </Badge>
+                {fw.invalid_refs.length > 0 ? (
+                  <Badge variant="destructive">剔除编造引用 {fw.invalid_refs.length} 条</Badge>
+                ) : (
+                  <Badge variant="secondary">零编造</Badge>
+                )}
+              </div>
 
-                <div className="rounded-xl border border-border/60 px-5 py-4">
-                  <div className="mb-2 flex items-center justify-between">
-                    <h2 className="text-sm font-medium">References（由本地元数据渲染）</h2>
-                    <button
-                      type="button"
-                      onClick={() => void runTranslate()}
-                      disabled={busy}
-                      className="rounded-md border border-primary/40 bg-primary/10 px-3 py-1 text-[11px] text-primary disabled:opacity-40"
-                    >
-                      摘要译成英文
-                    </button>
-                  </div>
-                  <ol className="space-y-1.5 text-[12px] text-muted-foreground">
+              {Object.entries(fw.sections).map(([name, text]) => (
+                <Card key={name}>
+                  <CardHeader>
+                    <CardTitle>{name}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="whitespace-pre-wrap text-[14px] leading-7 text-foreground/85">
+                      {text}
+                    </p>
+                  </CardContent>
+                </Card>
+              ))}
+
+              <Card>
+                <CardHeader className="flex-row items-center justify-between gap-3">
+                  <CardTitle>References（由本地元数据渲染）</CardTitle>
+                  <Button
+                    variant="selected"
+                    size="sm"
+                    onClick={() => void runTranslate()}
+                    disabled={busy}
+                  >
+                    <Languages className="h-3.5 w-3.5" />
+                    摘要译成英文
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  <ol className="space-y-1.5 text-[12px] leading-6 text-muted-foreground">
                     {fw.references.map((r) => (
                       <li key={r.doc_id}>
-                        <span className="mr-1.5 font-mono text-[11px] text-foreground/60">[{r.n}]</span>
+                        <span className="mr-1.5 font-mono text-[11px] text-foreground/60">
+                          [{r.n}]
+                        </span>
                         {r.authors.slice(0, 3).join(", ")}
                         {r.authors.length > 3 ? " et al." : ""}. {r.title}. {r.year ?? "年份未知"}.
                       </li>
                     ))}
                   </ol>
-                </div>
+                </CardContent>
+              </Card>
 
-                {en && (
-                  <article className="rounded-xl border border-primary/25 bg-primary/5 px-5 py-4">
-                    <h2 className="mb-2 text-sm font-medium text-primary">Abstract (English)</h2>
-                    <p className="whitespace-pre-wrap text-[14px] leading-7 text-foreground/85">{en}</p>
-                  </article>
-                )}
-              </div>
-            )}
-            {!fw && !busy && (
-              <p className="text-sm text-muted-foreground">
-                输入主题后生成 Abstract / Introduction / Related Work；正文里的引用编号只能来自库内文献，
-                参考文献条目由系统按元数据渲染，模型无法自己写条目。
-              </p>
-            )}
-          </section>
-        )}
+              {en && (
+                <Card variant="accent">
+                  <CardHeader>
+                    <CardTitle className="text-primary">Abstract (English)</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="whitespace-pre-wrap text-[14px] leading-7 text-foreground/85">
+                      {en}
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
+
+          {!fw && !busy && (
+            <EmptyState
+              icon={<FileUp className="h-5 w-5" />}
+              title="输入主题后生成论文框架"
+              description="生成 Abstract / Introduction / Related Work；正文里的引用编号只能来自库内文献，参考文献条目由系统按元数据渲染，模型无法自己写条目。"
+            />
+          )}
+        </section>
+      )}
     </SiteShell>
   );
 }
