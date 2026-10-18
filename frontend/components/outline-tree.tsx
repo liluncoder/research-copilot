@@ -25,11 +25,11 @@ export function OutlineTree({
             onClick={() => onSelect?.(node)}
             title={`第 ${node.page} 页`}
             className={cn(
-              "w-full rounded px-2 py-1 text-left text-sm hover:bg-muted",
+              "w-full rounded-md px-2 py-1 text-left text-[13px] transition-colors hover:bg-muted/60",
               node.level === 1 && "font-medium",
               node.level === 2 && "pl-5",
               node.level === 3 && "pl-9 text-muted-foreground",
-              activeLabel === node.label && "bg-muted",
+              activeLabel === node.label && "bg-primary/10 text-primary",
             )}
           >
             {node.label}
