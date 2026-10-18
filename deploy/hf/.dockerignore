@@ -1,0 +1,13 @@
+# HF Space 构建上下文（由 tools/deploy_hf.py 生成，不要把整个仓库当上下文）
+.git
+.gitignore
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+**/.mypy_cache
+frontend/node_modules
+frontend/.next
+frontend/.next-build
+frontend/tsconfig.tsbuildinfo
+backend/data/translate
+*.log

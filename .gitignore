@@ -11,6 +11,8 @@ venv/
 .env
 .env.*
 !.env.example
+# HF 部署 token（只放在本机，部署脚本读取后不打印）
+.hf_token
 
 # 构建产物
 .next/
@@ -55,3 +57,9 @@ backend/chroma_data/
 # next 构建产物（换 distDir 时用）
 frontend/.next-build/
 .next-build/
+
+# HF Space staging（由 tools/deploy_hf.py 生成，含本地数据，不进仓库）
+build/
+_shots/
+# 本地下载的 embedding 权重（2GB+，复跑用；不进仓库）
+models/
