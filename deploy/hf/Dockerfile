@@ -29,9 +29,13 @@ RUN npm run build
 # ---------- 2. 运行时：Python + Node + 预置数据 ----------
 FROM python:3.11-slim
 
-# libgomp1：torch / onnxruntime 的 OpenMP 运行时；curl 留给健康检查
+# libgomp1：torch / onnxruntime 的 OpenMP 运行时
+# OpenCV（RapidOCR 依赖）跑在无桌面的 slim 里，仍需要这些 X/GL 运行库；
+# 否则 import cv2 会直接报 libxcb.so.1 / libGL.so.1 找不到。
 RUN apt-get update \
- && apt-get install -y --no-install-recommends libgomp1 ca-certificates \
+ && apt-get install -y --no-install-recommends \
+      libgomp1 ca-certificates \
+      libgl1 libglib2.0-0 libxcb1 libxext6 libsm6 libxrender1 \
  && rm -rf /var/lib/apt/lists/*
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
