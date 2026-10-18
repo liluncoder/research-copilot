@@ -18,7 +18,9 @@ services:
       - UPLOAD_DIR=/app/data/uploads
       - CHROMA_PERSIST_DIR=/app/chroma_data
     volumes:
-      - ./data/uploads:/app/data/uploads
+      # ★挂到 backend/data/uploads：后端默认 UPLOAD_DIR=./data/uploads（相对 cwd=backend），
+      #   本地开发与容器共用同一份数据，避免"开发传的文献在 Docker 里看不见"
+      - ./backend/data/uploads:/app/data/uploads
       - chroma_data:/app/chroma_data
       - ./tests/fixtures:/app/tests/fixtures:ro
     restart: unless-stopped
