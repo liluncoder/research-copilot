@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { PageHeader, SiteShell } from "@/components/site-shell";
 import {
   buildFramework,
   makeFigure,
@@ -91,22 +92,8 @@ export default function WritePage() {
   }
 
   return (
-    <main className="min-h-screen">
-      <div className="mx-auto w-full max-w-4xl px-6 py-10">
-        <header className="mb-8">
-          <h1 className="text-2xl font-semibold tracking-tight">写作 Copilot</h1>
-          <p className="mt-1.5 text-sm text-muted-foreground">
-            数据出图，图注只依据统计量；论文框架的参考文献只从库内选，编造一条都算失败。
-          </p>
-          <nav className="mt-5 flex gap-5 text-sm text-muted-foreground">
-            <Link href="/" className="hover:text-foreground">首页</Link>
-            <Link href="/library" className="hover:text-foreground">文献库</Link>
-            <Link href="/ask" className="hover:text-foreground">问答</Link>
-            <Link href="/reader" className="hover:text-foreground">阅读器</Link>
-            <Link href="/graph" className="hover:text-foreground">图谱</Link>
-            <Link href="/write" className="font-medium text-foreground">写作</Link>
-          </nav>
-        </header>
+    <SiteShell width="narrow">
+      <PageHeader title="写作 Copilot" desc="数据出图，图注只依据统计量；论文框架的参考文献只从库内选，编造一条都算失败。" />
 
         <div className="mb-6 flex gap-1 rounded-lg border border-border/60 p-1 text-sm">
           {(
@@ -265,7 +252,6 @@ export default function WritePage() {
             )}
           </section>
         )}
-      </div>
-    </main>
+    </SiteShell>
   );
 }

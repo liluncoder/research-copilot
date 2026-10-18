@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { OutlineTree } from "@/components/outline-tree";
+import { PageHeader, SiteShell } from "@/components/site-shell";
 import {
   type DedupAction,
   type DedupInfo,
@@ -134,18 +135,8 @@ export default function LibraryPage() {
   const section = selected?.sections.find((s) => s.label === activeSection) ?? null;
 
   return (
-    <main className="min-h-screen p-8 max-w-6xl mx-auto">
-      <header className="mb-6">
-        <div className="mb-2 flex items-baseline gap-3">
-          <h1 className="text-3xl font-bold">文献库</h1>
-          <Link href="/" className="text-sm text-muted-foreground underline">
-            返回首页
-          </Link>
-        </div>
-        <p className="text-muted-foreground">
-          S1 · 上传 PDF ⇒ 结构化解析（标题树 / 公式 / 参考文献）⇒ 入库
-        </p>
-      </header>
+    <SiteShell width="wide">
+      <PageHeader title="文献库" desc="上传 PDF 即完成结构化解析（标题树 / 公式 / 表格 / 参考文献）并自动建检索索引。" />
 
       <Card className="mb-6">
         <CardHeader>
@@ -448,6 +439,6 @@ export default function LibraryPage() {
           )}
         </section>
       </div>
-    </main>
+    </SiteShell>
   );
 }

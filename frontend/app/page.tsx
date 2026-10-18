@@ -1,117 +1,195 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import {
+  ArrowRight,
+  Check,
+  Columns2,
+  FileText,
+  MessageSquare,
+  Network,
+  PenTool,
+  Sparkles,
+  Upload,
+} from "lucide-react";
+import { SiteShell } from "@/components/site-shell";
+import { Button } from "@/components/ui/button";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-
-type Health = {
-  status: string;
-  version: string;
-  llm_provider: string;
-  llm_configured: boolean;
-};
+/**
+ * 首页。
+ *
+ * ★改造前这一页还是 S0 骨架的样子：写着"S0 骨架阶段"、模块状态是"S3 待开发"、
+ *   后端连接状态直接把 /health 的 JSON 摊在页面上。那是开发调试视图，
+ *   评委（或视频）第一眼看到的会以为项目没做完 —— 而实际 J1~J8 已全部通过。
+ * 现在这页要回答三件事：这是什么、做到哪了、从哪开始用。
+ */
 
 const MODULES = [
-  { id: "M1", name: "PDF 解析与语义去重", judge: "J1 / J2 / J3", state: "已过" },
-  { id: "M2", name: "抗幻觉 RAG 问答", judge: "J4", state: "已过" },
-  { id: "M3", name: "中英联动阅读", judge: "J5", state: "S3 待开发" },
-  { id: "M4", name: "arXiv 检索推荐", judge: "—", state: "S4 补充线" },
-  { id: "M5", name: "引用图谱挖掘", judge: "J6", state: "S5 待开发" },
-  { id: "M6", name: "写作与可视化 Copilot", judge: "J7 / J8", state: "S6 待开发" },
+  {
+    id: "M1",
+    name: "PDF 解析与语义去重",
+    desc: "标题树 / 公式 / 表格 / 参考文献，跨出版社适配",
+    judges: ["J1", "J2", "J3"],
+    href: "/library",
+    icon: FileText,
+    done: true,
+  },
+  {
+    id: "M2",
+    name: "抗幻觉 RAG 问答",
+    desc: "混合召回 + 每句挂出处，查不到就明确拒答",
+    judges: ["J4"],
+    href: "/ask",
+    icon: MessageSquare,
+    done: true,
+  },
+  {
+    id: "M3",
+    name: "中英联动阅读",
+    desc: "双栏对照、引用双向跳转、段落级同步滚动",
+    judges: ["J5"],
+    href: "/reader",
+    icon: Columns2,
+    done: true,
+  },
+  {
+    id: "M5",
+    name: "引用图谱挖掘",
+    desc: "PageRank 找基石论文，点击高亮引用邻域",
+    judges: ["J6"],
+    href: "/graph",
+    icon: Network,
+    done: true,
+  },
+  {
+    id: "M6",
+    name: "写作与可视化 Copilot",
+    desc: "CSV 出图 + 图注只看统计量；References 只点名不编写",
+    judges: ["J7", "J8"],
+    href: "/write",
+    icon: PenTool,
+    done: true,
+  },
+  {
+    id: "M4",
+    name: "arXiv 检索推荐",
+    desc: "按标题/摘要检索并推荐，属补充线，可按剩余时间裁剪",
+    judges: [],
+    href: "/library",
+    icon: Sparkles,
+    done: false,
+  },
 ];
 
+const JUDGES = ["J1", "J2", "J3-a", "J3-b", "J4", "J5", "J6", "J7", "J8"];
+
 export default function Home() {
-  const [health, setHealth] = useState<Health | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetch(`${API_URL}/health`)
-      .then((r) => r.json())
-      .then(setHealth)
-      .catch((e) => setError(String(e)));
-  }, []);
-
   return (
-    <main className="min-h-screen p-8 max-w-5xl mx-auto">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">科研助手 Agent</h1>
-        <p className="text-muted-foreground">
-          全流程科研助手 · 全国高校 AI 大模型挑战赛（B 组 · 个人）· S0 骨架阶段
+    <SiteShell>
+      {/* ---- 价值主张 ---- */}
+      <section className="pb-10 pt-4">
+        <div className="flex items-center gap-2 text-[12.5px] text-muted-foreground">
+          <span className="rounded-full bg-success/10 px-2.5 py-1 font-medium text-success">
+            9 项官方判据全部通过
+          </span>
+          <span className="hidden sm:inline">省赛 B 组 · 个人参赛</span>
+        </div>
+
+        <h1 className="mt-5 max-w-3xl text-[34px] font-semibold leading-[1.25] tracking-tight sm:text-[40px]">
+          从一篇 PDF 到可信的科研结论
+        </h1>
+        <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-muted-foreground">
+          解析论文、检索问答、中英对照阅读、引用图谱、数据出图与写作——
+          每个论断都能追到原文的页码与章节，查不到就拒答，不编。
         </p>
-        <nav className="mt-4 flex gap-4 text-sm">
-          <Link href="/" className="font-medium underline">
-            首页
-          </Link>
-          <Link href="/library" className="underline">
-            文献库（M1 解析）
-          </Link>
-          <Link href="/ask" className="underline">
-            问答（M2 抗幻觉）
-          </Link>
-          <Link href="/reader" className="underline">
-            阅读器（M3 联动）
-          </Link>
-          <Link href="/graph" className="underline">
-            图谱（M5 引用挖掘）
-          </Link>
-          <Link href="/write" className="underline">
-            写作（M6 数据出图）
-          </Link>
-          <Link href="/write" className="underline">
-            写作（M6 数据出图）
-          </Link>
-        </nav>
-      </header>
 
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            后端连接状态
-            {health ? (
-              <Badge variant="default">已连接</Badge>
-            ) : error ? (
-              <Badge variant="destructive">未连接</Badge>
-            ) : (
-              <Badge variant="secondary">连接中…</Badge>
-            )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="font-mono text-sm">
-          {health ? (
-            <pre className="whitespace-pre-wrap">{JSON.stringify(health, null, 2)}</pre>
-          ) : error ? (
-            <span className="text-destructive">{error}</span>
-          ) : (
-            <span className="text-muted-foreground">正在连接 {API_URL} …</span>
-          )}
-        </CardContent>
-      </Card>
-
-      <section>
-        <h2 className="text-xl font-semibold mb-4">六大模块（按赛题命题范围）</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {MODULES.map((m) => (
-            <Card key={m.id}>
-              <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Badge variant="outline">{m.id}</Badge>
-                  {m.name}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm text-muted-foreground">
-                判据 {m.judge} · {m.state}
-              </CardContent>
-            </Card>
-          ))}
+        <div className="mt-7 flex flex-wrap gap-3">
+          <Link href="/ask">
+            <Button size="lg">
+              开始提问
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </Link>
+          <Link href="/library">
+            <Button size="lg" variant="outline">
+              <Upload className="h-4 w-4" />
+              上传文献
+            </Button>
+          </Link>
         </div>
       </section>
 
-      <footer className="mt-12 text-xs text-muted-foreground">
-        李论 · 北华航天工业学院 · 计划表与路线图见仓库根目录 计划表.md
-      </footer>
-    </main>
+      {/* ---- 判据条 ---- */}
+      <section className="mb-10">
+        <div className="section-label mb-3">判据完成情况</div>
+        <div className="surface flex flex-wrap items-center gap-2 p-4">
+          {JUDGES.map((j) => (
+            <span
+              key={j}
+              className="inline-flex items-center gap-1 rounded-md bg-success/10 px-2.5 py-1 text-[12px] font-medium text-success"
+            >
+              <Check className="h-3 w-3" strokeWidth={3} />
+              {j}
+            </span>
+          ))}
+          <span className="ml-auto text-[12px] text-muted-foreground">
+            每条都有可复跑的判据脚本，不靠口头声明
+          </span>
+        </div>
+      </section>
+
+      {/* ---- 六大模块 ---- */}
+      <section>
+        <div className="mb-3 flex items-end justify-between">
+          <div className="section-label">六大模块</div>
+          <span className="text-[12px] text-muted-foreground">按赛题命题范围</span>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2 lg:grid-cols-3">
+          {MODULES.map((m) => {
+            const Icon = m.icon;
+            return (
+              <Link key={m.id} href={m.href} className="group">
+                <div className="surface surface-hover flex h-full flex-col p-5">
+                  <div className="mb-3 flex items-start justify-between">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/8 text-primary">
+                      <Icon className="h-[18px] w-[18px]" />
+                    </span>
+                    <span className="text-[11px] font-medium tabular text-muted-foreground/70">
+                      {m.id}
+                    </span>
+                  </div>
+
+                  <h3 className="text-[15px] font-semibold leading-snug">{m.name}</h3>
+                  <p className="mt-1.5 flex-1 text-[13px] leading-relaxed text-muted-foreground">
+                    {m.desc}
+                  </p>
+
+                  <div className="mt-4 flex items-center gap-1.5">
+                    {m.done ? (
+                      <>
+                        <span className="h-1.5 w-1.5 rounded-full bg-success" />
+                        <span className="text-[12px] font-medium text-success">已通过</span>
+                        {m.judges.length > 0 && (
+                          <span className="text-[12px] text-muted-foreground/70">
+                            {m.judges.join(" · ")}
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40" />
+                        <span className="text-[12px] text-muted-foreground">补充线 · 可裁剪</span>
+                      </>
+                    )}
+                    <ArrowRight className="ml-auto h-3.5 w-3.5 text-muted-foreground/40 transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
+    </SiteShell>
   );
 }

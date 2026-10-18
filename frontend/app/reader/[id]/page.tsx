@@ -187,7 +187,7 @@ export default function ReaderPage() {
 
   return (
     <main className="flex h-screen flex-col">
-      <header className="flex flex-wrap items-center gap-3 border-b border-border/60 px-5 py-3">
+      <header className="site-header flex flex-wrap items-center gap-3 px-5 py-2.5">
         <Link href="/library" className="text-sm text-muted-foreground hover:text-foreground">
           ← 文献库
         </Link>

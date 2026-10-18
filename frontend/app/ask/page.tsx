@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { askQuestion, type QAResult } from "@/lib/api";
+import { PageHeader, SiteShell } from "@/components/site-shell";
 
 /** 示例问题：一键复现 J4 三连问，评审不用自己编问题。 */
 const EXAMPLES = [
@@ -68,31 +69,8 @@ export default function AskPage() {
   }
 
   return (
-    <main className="min-h-screen">
-      <div className="mx-auto w-full max-w-3xl px-6 py-12">
-        <header className="mb-10">
-          <h1 className="text-2xl font-semibold tracking-tight">抗幻觉问答</h1>
-          <p className="mt-1.5 text-sm text-muted-foreground">
-            只依据库内文献作答，每个论断都挂出处；查不到就明确拒答。
-          </p>
-          <nav className="mt-5 flex gap-5 text-sm text-muted-foreground">
-            <Link href="/" className="hover:text-foreground">
-              首页
-            </Link>
-            <Link href="/library" className="hover:text-foreground">
-              文献库
-            </Link>
-            <Link href="/ask" className="font-medium text-foreground">
-              问答
-            </Link>
-            <Link href="/reader" className="hover:text-foreground">
-              阅读器
-            </Link>
-            <Link href="/graph" className="hover:text-foreground">
-              图谱
-            </Link>
-          </nav>
-        </header>
+    <SiteShell width="narrow">
+      <PageHeader title="抗幻觉问答" desc="只依据库内文献作答，每个论断都挂出处；查不到就明确拒答。" />
 
         <form
           onSubmit={(e) => {
@@ -252,7 +230,6 @@ export default function AskPage() {
         <footer className="mt-16 text-[11px] text-muted-foreground/70">
           检索为空时不会调用大模型；回答里的出处会逐条核对，对不上即剔除。
         </footer>
-      </div>
-    </main>
+    </SiteShell>
   );
 }

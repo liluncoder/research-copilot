@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { listDocuments, type DocumentMeta } from "@/lib/api";
+import { PageHeader, SiteShell } from "@/components/site-shell";
 
 export default function ReaderIndex() {
   const [items, setItems] = useState<DocumentMeta[]>([]);
@@ -15,21 +16,8 @@ export default function ReaderIndex() {
   }, []);
 
   return (
-    <main className="min-h-screen">
-      <div className="mx-auto w-full max-w-3xl px-6 py-12">
-        <header className="mb-8">
-          <h1 className="text-2xl font-semibold tracking-tight">阅读器</h1>
-          <p className="mt-1.5 text-sm text-muted-foreground">
-            双栏对照阅读：左边原文、右边中文；点引用编号可跳到参考文献，点参考文献可反查正文。
-          </p>
-          <nav className="mt-5 flex gap-5 text-sm text-muted-foreground">
-            <Link href="/" className="hover:text-foreground">首页</Link>
-            <Link href="/library" className="hover:text-foreground">文献库</Link>
-            <Link href="/ask" className="hover:text-foreground">问答</Link>
-            <Link href="/reader" className="font-medium text-foreground">阅读器</Link>
-            <Link href="/graph" className="hover:text-foreground">图谱</Link>
-          </nav>
-        </header>
+    <SiteShell width="narrow">
+      <PageHeader title="阅读器" desc="双栏对照阅读：左边原文、右边中文；点引用编号可跳到参考文献，点参考文献可反查正文。" />
 
         {err && <p className="text-sm text-destructive">读取失败：{err}</p>}
 
@@ -53,7 +41,6 @@ export default function ReaderIndex() {
             </li>
           )}
         </ul>
-      </div>
-    </main>
+    </SiteShell>
   );
 }
