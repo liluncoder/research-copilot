@@ -2,7 +2,7 @@
 
 > 仓库：<https://github.com/liluncoder/research-copilot>　·　全国高校 AI 大模型挑战赛（B 组 · 个人）
 >
-> **在线演示**：HF Spaces（部署后替换）`https://liluncoder-research-copilot.hf.space`
+> **在线演示**：ModelScope 创空间（部署后回填地址）
 
 从一篇 PDF 到可信的科研结论：结构化解析 → 抗幻觉问答 → 中英联动阅读 → 引用图谱 → 数据出图与写作。
 核心不是"让大模型多写"，而是**每个论断都能追到原文页码与章节；查不到就明确拒答**。
@@ -76,17 +76,23 @@ python tools/build.py --api http://localhost:8000
 Next 默认用 jest-worker 子进程编译，沙箱禁止命名管道（`spawn EPERM`）——
 `next.config.mjs` 已关 `webpackBuildWorker`、改 `workerThreads`，构建可在受限环境内完成。
 
-## 在线演示（HF Spaces 单容器）
+## 在线演示（单容器）
 
 `deploy/hf/` 是演示镜像：Next.js 跑 7860 对外，FastAPI 跑容器内 127.0.0.1:8000，
 `/api` 与 `/health` 由 Next rewrite 同源转发；构建期预置 9 篇文献、845 块索引与 BGE-M3 权重。
+同一个镜像同时适配 **ModelScope 创空间**（`docker.yaml`，端口固定 7860）与 **HF Spaces**（需 PRO）。
 
-```bash
-python tools\deploy_hf.py                 # 生成 build/hf-space（演示必需文件）
-python tools\deploy_hf.py --upload        # 需要 HF_TOKEN（write）
+```powershell
+# ModelScope 创空间（主）：先在网页建 Docker 创空间，再推
+python tools\deploy_hf.py                    # 生成 build/hf-space / build/ms-space 的源文件
+$env:MODELSCOPE_TOKEN='ms-...'
+python tools\deploy_modelscope.py --repo <用户名>/research-copilot
+
+# HF Spaces（备，需要 PRO）：登录后
+python tools\deploy_hf.py --upload --set-secret --wait
 ```
 
-Space 里只配一个 Secret：`DEEPSEEK_API_KEY`。免费 Space 无持久盘，重启后新上传的 PDF 会丢；
+演示环境只配一个环境变量/Secret：`DEEPSEEK_API_KEY`。免费创空间无持久盘，重启后新上传的 PDF 会丢；
 预置语料不受影响。详见 `deploy/hf/README.md`。
 
 ## 目录结构

@@ -13,6 +13,8 @@ venv/
 !.env.example
 # HF 部署 token（只放在本机，部署脚本读取后不打印）
 .hf_token
+# ModelScope 访问令牌（同上）
+.ms_token
 
 # 构建产物
 .next/

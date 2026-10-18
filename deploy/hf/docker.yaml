@@ -1,0 +1,3 @@
+# ModelScope 创空间的构建配置（必需）。
+# 平台读到它才会走 Docker 构建；对外端口固定 7860。
+dockerfile: Dockerfile

@@ -58,7 +58,7 @@ def stage(out: Path) -> None:
         shutil.rmtree(out)
     out.mkdir(parents=True)
 
-    for name in ("Dockerfile", "start.sh", "README.md", ".dockerignore"):
+    for name in ("Dockerfile", "start.sh", "README.md", ".dockerignore", "docker.yaml", "fetch_bge.py"):
         _copy(HF_DIR / name, out / name)
 
     for name in BACKEND_DIRS:
@@ -85,6 +85,15 @@ def stage(out: Path) -> None:
 
 def _token() -> str:
     token = os.environ.get("HF_TOKEN") or os.environ.get("HUGGINGFACE_TOKEN")
+    if not token:
+        # hf auth login 会把 token 存进 ~/.cache/huggingface/token；
+        # get_token() 会读它（也包括 HF_TOKEN 环境变量）。
+        try:
+            from huggingface_hub import get_token
+
+            token = get_token()
+        except Exception:  # noqa: BLE001
+            token = None
     if not token:
         f = ROOT / ".hf_token"
         if f.exists():
