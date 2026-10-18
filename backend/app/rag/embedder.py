@@ -103,8 +103,12 @@ def build_embedder(backend: str = "auto", model: str = "BAAI/bge-m3", device: st
     """
     backend = (backend or "auto").lower()
     local = os.environ.get("BGE_M3_PATH")
-    if local and Path(local).exists() and any(Path(local).glob("*.safetensors")):
-        model = local
+    if local and Path(local).exists():
+        p = Path(local)
+        # 两种权重格式都认：SentenceTransformer.save() 默认写 safetensors，
+        # 而从 HF 原始仓库直接下的是 pytorch_model.bin。
+        if any(p.glob("*.safetensors")) or (p / "pytorch_model.bin").exists():
+            model = local
     if backend == "hash":
         return HashEmbedder()
 

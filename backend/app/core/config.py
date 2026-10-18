@@ -46,6 +46,10 @@ class Settings(BaseSettings):
     # 存储
     chroma_persist_dir: str = "./chroma_data"
     upload_dir: str = "./data/uploads"
+    # auto = 装了 chromadb 就用、否则 numpy；numpy = 强制读 <doc>/vectors.npy 索引。
+    # ★HF 单容器用的是构建期预生成的 numpy 索引；chromadb 也在镜像依赖里，
+    #   若保持 auto 会切到空的 Chroma collection ⇒ 检索零命中。所以 HF 固定 STORE_BACKEND=numpy。
+    store_backend: str = "auto"  # auto | numpy | chroma
 
     # 服务
     backend_port: int = 8000

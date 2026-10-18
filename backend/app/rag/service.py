@@ -50,7 +50,7 @@ def reset_caches() -> None:
 
 def _store():
     s = get_settings()
-    return build_store(s.chroma_persist_dir)
+    return build_store(s.chroma_persist_dir, s.store_backend)
 
 
 def index_document(doc_id: str, parsed: dict, *, filename: str | None = None) -> dict[str, Any]:

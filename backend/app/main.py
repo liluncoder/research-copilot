@@ -1,4 +1,4 @@
-"""FastAPI 应用入口（S0 骨架：/health + /api/v1/modules）。"""
+"""FastAPI 应用入口（/health + /api/v1/modules）。"""
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -34,13 +34,14 @@ app.include_router(writing.router)
 
 @app.get("/health")
 def health() -> dict:
-    """S0 出口判据：前端据此判断全栈闭环是否通。"""
+    """全栈闭环自检：前端顶栏的服务状态点与部署探针都读这里。"""
     return {
         "status": "ok",
         "version": "0.1.0",
-        "stage": "S0",
+        "stage": "S7",
         "llm_provider": settings.llm_provider,
         "llm_configured": settings.llm_configured(),
+        "embedding_backend": settings.embedding_backend,
     }
 
 
@@ -49,11 +50,18 @@ def modules() -> dict:
     """六大模块当前状态（与路线/06 的小阶段目标对应）。"""
     return {
         "modules": [
-            {"id": "M1", "name": "PDF 解析与语义去重", "stage": "S1", "state": "done"},
-            {"id": "M2", "name": "抗幻觉 RAG 问答", "stage": "S2", "state": "done"},
-            {"id": "M3", "name": "中英联动阅读", "stage": "S3", "state": "pending"},
-            {"id": "M4", "name": "arXiv 检索推荐", "stage": "S4", "state": "pending"},
-            {"id": "M5", "name": "引用图谱挖掘", "stage": "S5", "state": "pending"},
-            {"id": "M6", "name": "写作与可视化 Copilot", "stage": "S6", "state": "pending"},
+            {"id": "M1", "name": "PDF 解析与语义去重", "stage": "S1", "state": "done", "judges": ["J1", "J2", "J3"]},
+            {"id": "M2", "name": "抗幻觉 RAG 问答", "stage": "S2", "state": "done", "judges": ["J4"]},
+            {"id": "M3", "name": "中英联动阅读", "stage": "S3", "state": "done", "judges": ["J5"]},
+            {
+                "id": "M4",
+                "name": "arXiv 检索推荐",
+                "stage": "S4",
+                "state": "supplemental",
+                "judges": [],
+                "note": "补充线，按赛程裁剪；不计入九项判据",
+            },
+            {"id": "M5", "name": "引用图谱挖掘", "stage": "S5", "state": "done", "judges": ["J6"]},
+            {"id": "M6", "name": "写作与可视化 Copilot", "stage": "S6", "state": "done", "judges": ["J7", "J8"]},
         ]
     }

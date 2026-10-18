@@ -12,6 +12,10 @@ dependencies = [
     "pymupdf>=1.24.0",
     "numpy>=2.0",
     "pillow>=10.0",
+    # J7 图表：CSV 统计（figures.py 直接 import pandas）
+    "pandas>=2.2",
+    # J6 引用图谱：PageRank / 图结构
+    "networkx>=3.0",
     # OCR：RapidOCR 为主（轻、快，见 report/J3_判词.md）
     "rapidocr_onnxruntime>=1.2.0",
     # 内存测量（J3 判据）
