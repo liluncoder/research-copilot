@@ -31,11 +31,19 @@ export default function GraphPage() {
   const boxRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<{
     setOption: (o: unknown, notMerge?: boolean) => void;
+    getOption?: () => { series?: { data?: unknown[] }[] };
     dispose: () => void;
     resize: () => void;
     on: (ev: string, fn: (p: { data?: { id?: string } }) => void) => void;
   } | null>(null);
   const echartsRef = useRef<{ init: (el: HTMLElement) => unknown } | null>(null);
+  /**
+   * ★节点位置缓存。
+   * 每次点击会导致 setOption 重建 series，而 force 布局会把所有节点重新抖开一遍
+   * —— 这是"画面一闪一闪"的另一半原因（另一半是边也触发 hover 聚焦）。
+   * 把上一帧布局出的 x/y 存下来回填，重绘时位置不变，只变颜色/透明度。
+   */
+  const posRef = useRef<Record<string, { x: number; y: number }>>({});
 
   useEffect(() => {
     getGraph(40, 12)
@@ -78,9 +86,12 @@ export default function GraphPage() {
       const nodes = data.display.nodes.map((n) => {
         const active = !neighbors || neighbors.has(n.id);
         const size = 8 + 34 * Math.sqrt(n[metric] / maxVal);
+        const pos = posRef.current[n.id];
         return {
           id: n.id,
           name: n.label,
+          // 有缓存位置就回填，避免重绘时整图重排
+          ...(pos ? { x: pos.x, y: pos.y } : {}),
           symbolSize: n.id === selected ? size + 8 : size,
           itemStyle: {
             color: n.in_library ? LOCAL_COLOR : EXT_COLOR,
@@ -103,6 +114,15 @@ export default function GraphPage() {
         return {
           source: e.source,
           target: e.target,
+          /**
+           * ★边不参与 hover（2026-10-18 修"鼠标扫过连线整图闪一下"）：
+           *   ECharts 的 emphasis.focus 默认对 node 和 edge 都生效。
+           *   鼠标只是从两个球之间划过，落在线上也会触发 adjacency 聚焦 ——
+           *   全图瞬间虚化再恢复，看起来就是闪。这里把 edge 的 emphasis 直接关掉。
+           *   tooltip 同理：边没有可展示的字段，formatter 返回空串会留下一个空框。
+           */
+          emphasis: { disabled: true },
+          tooltip: { show: false },
           lineStyle: {
             color: active ? (neighbors ? LOCAL_EDGE : EXT_EDGE) : "rgba(120,118,112,0.08)",
             width: active ? 1.2 : 0.6,
@@ -146,7 +166,28 @@ export default function GraphPage() {
               roam: true,
               draggable: true,
               force: { repulsion: 130, edgeLength: [60, 130], gravity: 0.12, friction: 0.2 },
-              emphasis: { focus: "adjacency", lineStyle: { width: 2 } },
+              /**
+               * hover 只强化"被指的球"，不改线宽。
+               * 原来写的是 lineStyle: { width: 2 } —— 鼠标扫过连线时线宽 1.2→2 再变回来，
+               * 整片网会跟着抖一下，加上 focus 的虚化就是"一闪一闪"。
+               */
+              emphasis: {
+                focus: "adjacency",
+                scale: 1.12,
+                itemStyle: { borderColor: LOCAL_EDGE, borderWidth: 2 },
+                label: { show: true },
+              },
+              // 虚化程度比默认轻一点：data 里已按"点击选中"设了 opacity，双重叠加会过淡
+              blur: {
+                itemStyle: { opacity: 0.22 },
+                lineStyle: { opacity: 0.12 },
+                label: { opacity: 0.2 },
+              },
+              // 更新用缓动而不是瞬切，视觉上"平滑过渡"而不是"啪一下"
+              animation: true,
+              animationDuration: 700,
+              animationDurationUpdate: 280,
+              animationEasingUpdate: "cubicOut",
               data: nodes,
               links,
             },
@@ -155,6 +196,21 @@ export default function GraphPage() {
         false,
       );
       chart.resize();
+
+      // 布局稳定后把坐标存下来，供下一次重绘回填（避免每次点击整图重排）
+      window.setTimeout(() => {
+        if (disposed) return;
+        const opt = chartRef.current?.getOption?.();
+        const arr = opt?.series?.[0]?.data as Array<{ id?: string; x?: number; y?: number }> | undefined;
+        if (!arr) return;
+        const next: Record<string, { x: number; y: number }> = {};
+        for (const it of arr) {
+          if (it?.id && typeof it.x === "number" && typeof it.y === "number") {
+            next[it.id] = { x: it.x, y: it.y };
+          }
+        }
+        posRef.current = { ...posRef.current, ...next };
+      }, 900);
     })();
 
     return () => {
@@ -229,6 +285,19 @@ export default function GraphPage() {
       <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[1fr_20rem]">
         <div className="relative min-h-0">
           <div ref={boxRef} className="h-full w-full" />
+
+          {/* 加载态：图数据 260KB 左右，加上 echarts 首次初始化约 1~2 秒。
+              空画布会让人以为页面坏了，所以给一个轻动的占位。 */}
+          {!data && !err && (
+            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-3 text-muted-foreground">
+              <div className="dots flex items-end gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-primary/70" />
+                <span className="h-2 w-2 rounded-full bg-primary/70" />
+                <span className="h-2 w-2 rounded-full bg-primary/70" />
+              </div>
+              <p className="text-[12px]">正在构建引文网络…</p>
+            </div>
+          )}
           <div className="pointer-events-none absolute bottom-4 left-4 flex flex-wrap gap-4 rounded-lg bg-card/80 px-3 py-2 text-[11px] text-muted-foreground backdrop-blur-sm">
             <span className="flex items-center gap-1.5">
               <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: LOCAL_COLOR }} />

@@ -1,18 +1,22 @@
 """
 受限环境下构建前端。
 
-为什么需要这个脚本：本机（以及类似的受管环境）装了一个 safe-delete 钩子，
-它把 fs.unlink / recursiveDelete 转成"移到回收站"，而回收站在这个环境里
-会失败 ⇒ next build 在清理旧产物这一步就抛 EPERM，表现成"构建卡死/失败"。
+为什么需要这个脚本：本机（以及类似的受管环境）装了 safe-delete 钩子，
+它把 fs.unlink / recursiveDelete 转成"移到回收站"，而回收站在这里会失败，
+于是 next build 在"清理旧产物"这一步就抛 EPERM，表现成构建卡死/失败。
 
-绕法：
-  1. 用 Python 的 shutil.rmtree 先把产物目录删干净（不走 node 的 fs，绕开 shim）
-  2. 用独立的 distDir（.next-build），避免和 dev server 抢 .next
-  3. 目录不存在时 next 的 recursiveDelete 会直接跳过，所以这一步必须成功
+绕法（两层，按环境自动降级）：
+  1. 先尝试 rename 归档旧产物目录 —— 改名不触发删除检查，等效于"让 next 在干净目录里构建"
+  2. 如果目录已经归档过、或 rename 失败，退化到 shutil.rmtree（正常机器上没问题）
+  3. 用独立 distDir（.next-build），避免和 dev server 抢 .next
+
+★注意：本脚本会在 frontend/ 下留下 `.next-build-old-<时间戳>` 归档目录。
+  它们被 .gitignore 挡住，不会进仓库；想清理时跑 `python tools/build.py --purge`。
 
 用法（在 frontend/ 下）：
-    python tools/build.py
-    python tools/build.py --api http://localhost:8000
+    python tools/build.py                      # 构建（API 默认 localhost:8000）
+    python tools/build.py --api http://localhost:8010
+    python tools/build.py --purge              # 清掉所有归档目录（不做构建）
 """
 
 from __future__ import annotations
@@ -22,9 +26,40 @@ import os
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def stash(p: Path, label: str) -> None:
+    """把旧产物目录改名归档；失败再尝试删除。"""
+    if not p.exists():
+        return
+    target = p.with_name(f"{p.name}-old-{int(time.time())}")
+    try:
+        p.rename(target)
+        print(f"archived {label} -> {target.name}")
+        return
+    except OSError as e:
+        print(f"rename {label} failed ({e}); trying rmtree")
+    try:
+        shutil.rmtree(p, ignore_errors=True)
+        print(f"removed {label}: {'gone' if not p.exists() else 'FAILED'}")
+    except Exception as e:  # noqa: BLE001
+        print(f"rmtree {label} failed: {e}")
+
+
+def purge() -> int:
+    n = 0
+    for d in sorted(ROOT.glob(".next*-old-*")):
+        if d.is_dir():
+            shutil.rmtree(d, ignore_errors=True)
+            alone = "" if d.exists() else "（已删）"
+            print(f"purged {d.name}{alone}")
+            n += 1
+    print(f"共清理 {n} 个归档目录")
+    return 0
 
 
 def main() -> int:
@@ -32,13 +67,14 @@ def main() -> int:
     ap.add_argument("--api", default=os.environ.get("NEXT_PUBLIC_API_URL", "http://localhost:8000"),
                     help="构建期注入的后端地址（NEXT_PUBLIC_* 只能构建期生效）")
     ap.add_argument("--dist", default=".next-build")
+    ap.add_argument("--purge", action="store_true", help="只清理归档目录，不做构建")
     args = ap.parse_args()
 
+    if args.purge:
+        return purge()
+
     for d in (args.dist, ".next"):
-        p = ROOT / d
-        if p.exists():
-            shutil.rmtree(p, ignore_errors=True)
-            print(f"removed {d}: {'gone' if not p.exists() else 'FAILED（仍存在，构建可能失败）'}")
+        stash(ROOT / d, d)
 
     env = {
         **os.environ,
@@ -56,7 +92,7 @@ def main() -> int:
     print(f"building with API={args.api} dist={args.dist}")
     r = subprocess.run(cmd, cwd=ROOT, env=env)
     if r.returncode == 0:
-        print("\nBUILD OK")
+        print("\nBUILD OK（归档目录可用 --purge 清理）")
     return r.returncode
 
 

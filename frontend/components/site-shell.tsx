@@ -104,17 +104,19 @@ export function SiteShell({
 
       <main
         className={cn(
-          "flex-1 py-10",
+          // animate-fade-up：切页面时内容轻微上浮淡入，避免"啪一下整屏换掉"的突兀感
+          "flex-1 animate-fade-up py-10",
           width === "narrow" ? "mx-auto w-full max-w-4xl px-5 sm:px-8" : "container-page",
         )}
       >
         {children}
       </main>
 
+      {/* 页脚只放产品信息。参赛者姓名/学校/赛区属于申报材料，不该出现在演示界面。 */}
       <footer className="mt-8 border-t border-border/70">
         <div className="container-page flex flex-wrap items-center justify-between gap-2 py-6 text-[12px] text-muted-foreground">
-          <span>全流程科研助手 Agent · 全国高校 AI 大模型挑战赛（B 组）</span>
-          <span>李论 · 北华航天工业学院</span>
+          <span>科研助手 Agent</span>
+          <span>解析 · 检索 · 阅读 · 图谱 · 写作</span>
         </div>
       </footer>
     </div>

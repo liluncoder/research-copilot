@@ -65,3 +65,7 @@ build/
 _shots/
 # 本地下载的 embedding 权重（2GB+，复跑用；不进仓库）
 models/
+
+# next 构建产物与 build.py 的归档目录（.next-build-old-<时间戳>）
+frontend/.next*-old*/
+.next*-old*/
