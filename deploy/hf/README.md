@@ -13,7 +13,10 @@ short_description: 从 PDF 到可信科研结论：解析 / 抗幻觉问答 / �
 
 > 全国高校 AI 大模型挑战赛（B 组）参赛作品 · 李论（北华航天工业学院）
 >
-> 本地完整版：`docker compose up`；本 Space 是**单容器演示**（Next.js 前端 + FastAPI 后端 + 预置 9 篇文献索引）。
+> **在线地址**：<https://lixinci-research-copilot.ms.show>（ModelScope 创空间）
+>
+> 本地完整版：`docker compose up`；本镜像是**单容器演示**（Next.js 前端 + FastAPI 后端 +
+> 预置 9 篇文献索引），同时适配 ModelScope（`docker.yaml`）与 HF Spaces（需 PRO）。
 
 ## 这是什么
 
