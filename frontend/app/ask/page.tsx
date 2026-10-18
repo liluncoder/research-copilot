@@ -88,6 +88,9 @@ export default function AskPage() {
             <Link href="/reader" className="hover:text-foreground">
               阅读器
             </Link>
+            <Link href="/graph" className="hover:text-foreground">
+              图谱
+            </Link>
           </nav>
         </header>
 

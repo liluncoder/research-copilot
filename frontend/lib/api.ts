@@ -309,3 +309,64 @@ export function compareDocuments(
     cache: "no-store",
   }).then((r) => asJson<VersionDiff>(r));
 }
+
+// ---------------- S5 引用图谱（J6） ----------------
+
+export type GraphNode = {
+  id: string;
+  label: string;
+  kind: "local" | "external" | string;
+  year: number | null;
+  in_library: boolean;
+  pagerank: number;
+  pagerank_core: number;
+  centrality: number;
+  cited_by_local: number;
+  cites: number;
+};
+
+export type GraphEdge = { source: string; target: string; refs: number };
+
+export type GraphData = {
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+  display: { nodes: GraphNode[]; edges: GraphEdge[]; n_nodes: number; n_edges: number };
+  stats: {
+    n_nodes: number;
+    n_local: number;
+    n_external: number;
+    n_edges: number;
+    n_reference_entries: number;
+    n_matched_to_local: number;
+    local_match_rate: number;
+    density: number;
+  };
+  foundational: {
+    pagerank: GraphNode[];
+    in_degree: GraphNode[];
+    note: string;
+  };
+};
+
+export function getGraph(limit = 40, top = 12): Promise<GraphData> {
+  return fetch(`${API_URL}/api/v1/graph?limit=${limit}&top=${top}`, { cache: "no-store" }).then(
+    (r) => asJson<GraphData>(r),
+  );
+}
+
+export type GraphReview = {
+  review: string;
+  facts?: string[];
+  allowed_titles?: string[];
+  stats?: GraphData["stats"];
+  error?: string;
+  model?: string;
+};
+
+export function reviewGraph(top = 8): Promise<GraphReview> {
+  return fetch(`${API_URL}/api/v1/graph/review`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ top }),
+  }).then((r) => asJson<GraphReview>(r));
+}

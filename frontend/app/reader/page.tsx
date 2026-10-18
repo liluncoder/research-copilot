@@ -27,6 +27,7 @@ export default function ReaderIndex() {
             <Link href="/library" className="hover:text-foreground">文献库</Link>
             <Link href="/ask" className="hover:text-foreground">问答</Link>
             <Link href="/reader" className="font-medium text-foreground">阅读器</Link>
+            <Link href="/graph" className="hover:text-foreground">图谱</Link>
           </nav>
         </header>
 

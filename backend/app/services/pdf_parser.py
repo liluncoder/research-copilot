@@ -658,6 +658,25 @@ def _split_author_names(text: str) -> list[str]:
     return names
 
 
+TITLE_JUNK_RE = re.compile(
+    r"^(arxiv:|doi:|https?://|©|preprint|under review|received|accepted|published)",
+    re.I,
+)
+ARXIV_STAMP_RE = re.compile(r"^arXiv:\S+\s*\[|^\[?(stat\.ML|cs\.[A-Z]{2}|math\.)", re.I)
+DATE_ONLY_RE = re.compile(r"^\d{1,2}\s+[A-Z][a-z]{2,8}\s+\d{4}$")
+
+
+def _is_title_junk(text: str) -> bool:
+    """判断一行是否"不是标题"：侧边水印、DOI、纯日期、太短。"""
+    s = " ".join(text.split())
+    if len(s) < 12:
+        return True
+    if TITLE_JUNK_RE.match(s) or ARXIV_STAMP_RE.match(s) or DATE_ONLY_RE.match(s):
+        return True
+    # 水印行典型形态：含 arXiv 编号 + 日期戳
+    return bool(re.search(r"arXiv:\d{4}\.\d{4,5}", s)) or "​" in s
+
+
 def _extract_front_matter(
     lines: list[Line], profile: StyleProfile
 ) -> tuple[str | None, list[str], str, set[str]]:
@@ -672,15 +691,22 @@ def _extract_front_matter(
         return None, [], "", set()
 
     # ---- 标题：可能跨多行（Nature/预印本常见），同字号连续行一起收 ----
-    window = head[:16]
+    #   ★先剔除"侧边水印/元信息"再选最大字号：arXiv 预印本左侧那行
+    #     `arXiv:1909.01311v2 [stat.ML] 16 Jan 2021` 字号很大，会把真标题挤掉
+    #     （实测 DRTP 那篇的标题就变成了这行水印）。
+    window = [ln for ln in head[:16] if not _is_title_junk(ln.text)]
+    if not window:
+        return None, [], "", set()
     top = max(ln.size for ln in window)
     start = next((i for i, ln in enumerate(window) if ln.size >= top - 0.2), None)
     if start is None:
         return None, [], "", set()
     end = start
-    while end + 1 < len(head) and head[end + 1].size >= top - 0.2:
+    while end + 1 < len(window) and window[end + 1].size >= top - 0.2:
         end += 1
-    title_lines = head[start : end + 1]
+    title_lines = window[start : end + 1]
+    # 作者扫描要从"标题最后一行在 head 里的真实位置"继续
+    end = next(i for i, ln in enumerate(head) if ln is title_lines[-1])
     title = " ".join(ln.text for ln in title_lines).strip() or None
     title_texts = {ln.text for ln in title_lines}
     consumed = set(title_texts)

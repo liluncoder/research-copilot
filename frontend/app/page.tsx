@@ -54,6 +54,9 @@ export default function Home() {
           <Link href="/reader" className="underline">
             阅读器（M3 联动）
           </Link>
+          <Link href="/graph" className="underline">
+            图谱（M5 引用挖掘）
+          </Link>
         </nav>
       </header>
 
