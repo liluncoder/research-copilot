@@ -3,7 +3,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import compare, documents, graph, qa, reader, search
+from app.api import compare, documents, graph, qa, reader, search, writing
 from app.core.config import get_settings
 
 settings = get_settings()
@@ -29,6 +29,7 @@ app.include_router(qa.router)
 app.include_router(compare.router)
 app.include_router(reader.router)
 app.include_router(graph.router)
+app.include_router(writing.router)
 
 
 @app.get("/health")

@@ -51,3 +51,7 @@ tests/out/
 #   但后端从 backend/ 启动时数据落在 backend/data/ —— 实测被误提交过一次（0a9bff1be357）。
 backend/data/
 backend/chroma_data/
+
+# next 构建产物（换 distDir 时用）
+frontend/.next-build/
+.next-build/

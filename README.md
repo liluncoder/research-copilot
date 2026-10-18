@@ -46,6 +46,8 @@ cd frontend && pnpm install && pnpm dev
 | S1 文献库 API | `python tests/verify_s1_api.py` |
 | S2 检索（切块/混合召回/出处） | `python tests/verify_s2_retrieval.py`（加 `--backend bge-m3` 用真向量） |
 | J4 问答（三连问 + 出处 + 拒答） | `python tests/verify_j4_qa.py`（需 .env 里的 LLM key） |
+| J7 图表 + 图注（只看统计量） | `python tests/verify_j7_chart.py` |
+| J8 无幻觉 References | `python tests/verify_j8_refs.py` |
 
 > ★Windows 用户注意：PowerShell 5.1 **不支持** `cd a && b` 这种写法，
 > 请一行一行执行；J3 脚本已内置解释器自动选择，不需要设 `PYTHONPATH`。

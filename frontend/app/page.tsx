@@ -57,6 +57,12 @@ export default function Home() {
           <Link href="/graph" className="underline">
             图谱（M5 引用挖掘）
           </Link>
+          <Link href="/write" className="underline">
+            写作（M6 数据出图）
+          </Link>
+          <Link href="/write" className="underline">
+            写作（M6 数据出图）
+          </Link>
         </nav>
       </header>
 

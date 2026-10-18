@@ -370,3 +370,89 @@ export function reviewGraph(top = 8): Promise<GraphReview> {
     body: JSON.stringify({ top }),
   }).then((r) => asJson<GraphReview>(r));
 }
+
+// ---------------- S6 写作 Copilot（J7 / J8） ----------------
+
+export type ChartSpec = {
+  title?: { text?: string; left?: string };
+  tooltip?: Record<string, unknown>;
+  legend?: Record<string, unknown>;
+  grid?: Record<string, unknown>;
+  xAxis?: Record<string, unknown>;
+  yAxis?: Record<string, unknown>;
+  series: { name: string; type: string; data: number[]; showSymbol?: boolean; smooth?: boolean }[];
+};
+
+export type FigureStats = {
+  metric: string;
+  n_rows: number;
+  groups: Record<string, Record<string, number>>;
+  overall: Record<string, number>;
+};
+
+export type FigureResult = {
+  stats: FigureStats;
+  chart: ChartSpec;
+  caption: string;
+  warnings: string[];
+  model: string | null;
+};
+
+export function makeFigure(
+  file: File | Blob,
+  opts: { metric?: string; groupBy?: string; kind?: string; filename?: string } = {},
+): Promise<FigureResult> {
+  const form = new FormData();
+  form.append("file", file, opts.filename ?? "data.csv");
+  const q = new URLSearchParams();
+  if (opts.metric) q.set("metric", opts.metric);
+  if (opts.groupBy) q.set("group_by", opts.groupBy);
+  if (opts.kind) q.set("kind", opts.kind);
+  return fetch(`${API_URL}/api/v1/writing/figure?${q.toString()}`, {
+    method: "POST",
+    body: form,
+  }).then((r) => asJson<FigureResult>(r));
+}
+
+export type FrameworkRef = {
+  n: number;
+  doc_id: string;
+  title: string;
+  authors: string[];
+  year: number | null;
+  source: string;
+};
+
+export type FrameworkResult = {
+  topic: string;
+  sections: Record<string, string>;
+  references: FrameworkRef[];
+  invalid_refs: string[];
+  n_candidates: number;
+  n_citations: number;
+  model: string | null;
+  error: string | null;
+};
+
+export function buildFramework(
+  topic: string,
+  opts: { docIds?: string[]; useEvidence?: boolean } = {},
+): Promise<FrameworkResult> {
+  return fetch(`${API_URL}/api/v1/writing/framework`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      topic,
+      doc_ids: opts.docIds ?? null,
+      use_evidence: opts.useEvidence ?? true,
+    }),
+  }).then((r) => asJson<FrameworkResult>(r));
+}
+
+export function translateAbstract(text: string): Promise<{ text: string; model?: string; error?: string }> {
+  return fetch(`${API_URL}/api/v1/writing/translate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text, target: "en" }),
+  }).then((r) => asJson<{ text: string; model?: string; error?: string }>(r));
+}
