@@ -24,8 +24,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from deploy_hf import ROOT, stage  # noqa: E402
 
 
+def _redact(text: str) -> str:
+    import re
+
+    return re.sub(r"//oauth2:[^@]+@", "//oauth2:***@", text)
+
+
 def run(cmd: list[str], cwd: Path) -> None:
-    print("$", " ".join(cmd[:3] + (["..."] if len(cmd) > 3 else [])))
+    shown = [ _redact(x) for x in cmd[:3] ]
+    print("$", " ".join(shown + (["..."] if len(cmd) > 3 else [])))
     subprocess.run(cmd, cwd=cwd, check=True)
 
 
@@ -64,7 +71,23 @@ def main() -> int:
     except subprocess.CalledProcessError:
         print("! 仓库不可达：确认创空间已创建、token 有写权限、repo 名拼写正确", file=sys.stderr)
         return 1
-    run(["git", "push", "--force", url, "master"], out)
+
+    # ★创空间的 master 是受保护分支，不允许 force push。
+    # 先把远端历史取下来，mixed reset 到远端 HEAD（保留工作区文件），
+    # 再把我们的文件作为一次正常提交接在后面 → fast-forward push。
+    run(["git", "fetch", url, "master"], out)
+    run(["git", "reset", "--mixed", "FETCH_HEAD"], out)
+    run(["git", "add", "-A"], out)
+    commit = subprocess.run(
+        ["git", "commit", "-m", args.message],
+        cwd=out,
+        capture_output=True,
+        text=True,
+    )
+    if commit.returncode != 0 and "nothing to commit" not in commit.stdout:
+        print(commit.stdout, commit.stderr, file=sys.stderr)
+        return 1
+    run(["git", "push", url, "master"], out)
 
     print(f"\nSpace: https://modelscope.cn/studios/{args.repo}")
     print("下一步：到创空间页面点『上线 / 重启』触发 Docker 构建；")

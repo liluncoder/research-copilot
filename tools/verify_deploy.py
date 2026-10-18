@@ -31,7 +31,14 @@ def req(base: str, path: str, *, data: dict | None = None, timeout: int = 120):
     r = urllib.request.Request(
         url,
         data=body,
-        headers={"Content-Type": "application/json"} if body else {},
+        headers={
+            # ModelScope 的 ms.show 网关会拦 Python-urllib 默认 UA（403），
+            # 用浏览器 UA 才能过；不是应用层鉴权。
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
+            "Accept": "text/html,application/json;q=0.9,*/*;q=0.8",
+            **({"Content-Type": "application/json"} if body else {}),
+        },
         method="POST" if body else "GET",
     )
     t0 = time.time()

@@ -26,7 +26,21 @@ ENV NEXT_PUBLIC_API_URL="" \
     NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
-# ---------- 2. 运行时：Python + Node + 预置数据 ----------
+# ---------- 2. 模型：BGE-M3（独立 stage，改后端不会重下 2.2GB） ----------
+FROM python:3.11-slim AS model
+
+ARG PIP_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/
+ARG WITH_BGE=1
+ENV PYTHONUNBUFFERED=1
+
+# modelscope 的包体很小（核心是 modelscope-hub），带上 huggingface_hub 做备用源
+RUN pip install --no-cache-dir -i "${PIP_INDEX_URL}" "modelscope==1.40.2" huggingface_hub
+
+COPY fetch_bge.py /fetch_bge.py
+RUN mkdir -p /app/models \
+ && if [ "${WITH_BGE}" = "1" ]; then python /fetch_bge.py; fi
+
+# ---------- 3. 运行时：Python + Node + 预置数据 ----------
 FROM python:3.11-slim
 
 # libgomp1：torch / onnxruntime 的 OpenMP 运行时
@@ -47,16 +61,17 @@ ARG PIP_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/
 ARG TORCH_INDEX_URL=https://download.pytorch.org/whl/cpu
 
 COPY backend/pyproject.toml ./pyproject.toml
-# ★先装 CPU 版 torch：PyPI 的 linux 默认轮子带 CUDA，体积多出 2GB+
-RUN uv pip install --system --index-url "${TORCH_INDEX_URL}" "torch==2.4.1" \
- && uv pip install --system --index-url "${PIP_INDEX_URL}" -r pyproject.toml \
- && uv pip install --system --index-url "${PIP_INDEX_URL}" "modelscope==1.40.2"
+# ★torch 必须 >=2.6：transformers 5.x 会拒绝加载更低版本（报
+#   "Disabling PyTorch because PyTorch >= 2.6 is required"），BGE 随后 NameError。
+#   仍用 CPU 轮子，避免 CUDA 依赖多出 2GB+。
+RUN uv pip install --system --index-url "${TORCH_INDEX_URL}" "torch==2.6.0" \
+ && uv pip install --system --index-url "${PIP_INDEX_URL}" -r pyproject.toml
 
 COPY backend/app ./app
 COPY backend/tools ./tools
 COPY backend/data ./data
 COPY backend/chroma_data ./chroma_data
-COPY fetch_bge.py /app/fetch_bge.py
+COPY --from=model /app/models /app/models
 
 # ---------- 3. 预置 BGE-M3 与向量索引（可关） ----------
 # WITH_BGE=1：构建期下载 BGE-M3（约 2.2GB）并按 1024 维重建 9 篇文献的索引。
@@ -69,7 +84,6 @@ ENV HF_HOME=/app/models/hf \
     STORE_BACKEND=numpy
 
 RUN if [ "${WITH_BGE}" = "1" ]; then \
-      python /app/fetch_bge.py && \
       EMBEDDING_BACKEND=bge-m3 BGE_M3_PATH=/app/models/bge-m3 python tools/reindex_all.py ; \
     fi
 

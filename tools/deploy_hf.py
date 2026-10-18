@@ -55,7 +55,13 @@ def _copy(src: Path, dst: Path) -> None:
 
 def stage(out: Path) -> None:
     if out.exists():
-        shutil.rmtree(out)
+        # Windows 上 git 对象是只读的，直接 rmtree 会 PermissionError；
+        # 清掉只读位再删，保证重复部署不会卡住。
+        def _force(func, path, _exc):  # type: ignore[no-untyped-def]
+            os.chmod(path, 0o700)
+            func(path)
+
+        shutil.rmtree(out, onerror=_force)
     out.mkdir(parents=True)
 
     for name in ("Dockerfile", "start.sh", "README.md", ".dockerignore", "docker.yaml", "fetch_bge.py"):
