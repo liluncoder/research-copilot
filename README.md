@@ -2,7 +2,7 @@
 
 > 仓库：<https://github.com/liluncoder/research-copilot>　·　全国高校 AI 大模型挑战赛（B 组 · 个人）
 >
-> **在线演示**：ModelScope 创空间（部署后回填地址）
+> **在线演示**：<https://lixinci-research-copilot.ms.show>　（[创空间页](https://modelscope.cn/studios/lixinci/research-copilot)）
 
 从一篇 PDF 到可信的科研结论：结构化解析 → 抗幻觉问答 → 中英联动阅读 → 引用图谱 → 数据出图与写作。
 核心不是"让大模型多写"，而是**每个论断都能追到原文页码与章节；查不到就明确拒答**。
@@ -86,14 +86,14 @@ Next 默认用 jest-worker 子进程编译，沙箱禁止命名管道（`spawn E
 # ModelScope 创空间（主）：先在网页建 Docker 创空间，再推
 python tools\deploy_hf.py                    # 生成 build/hf-space / build/ms-space 的源文件
 $env:MODELSCOPE_TOKEN='ms-...'
-python tools\deploy_modelscope.py --repo <用户名>/research-copilot
+python tools\deploy_modelscope.py --repo lixinci/research-copilot
 
 # HF Spaces（备，需要 PRO）：登录后
 python tools\deploy_hf.py --upload --set-secret --wait
 ```
 
 演示环境只配一个环境变量/Secret：`DEEPSEEK_API_KEY`。免费创空间无持久盘，重启后新上传的 PDF 会丢；
-预置语料不受影响。详见 `deploy/hf/README.md`。
+预置语料不受影响。部署实测与已知限制见 `report/G20_判词.md`。
 
 ## 目录结构
 
