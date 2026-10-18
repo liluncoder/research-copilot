@@ -17,6 +17,9 @@ services:
     environment:
       - UPLOAD_DIR=/app/data/uploads
       - CHROMA_PERSIST_DIR=/app/chroma_data
+      # ★索引后端固定 numpy：镜像装了 chromadb，若走 auto 会优先打开空的
+      #   Chroma collection，而卷里的索引是 NumpyStore 写的 <doc>/vectors.npy ⇒ 检索零命中。
+      - STORE_BACKEND=numpy
     volumes:
       # ★挂到 backend/data/uploads：后端默认 UPLOAD_DIR=./data/uploads（相对 cwd=backend），
       #   本地开发与容器共用同一份数据，避免"开发传的文献在 Docker 里看不见"

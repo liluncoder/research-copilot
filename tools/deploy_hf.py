@@ -83,16 +83,47 @@ def stage(out: Path) -> None:
         print("  ! 演示语料少于 5 篇，确认 UPLOAD_DIR 是否指对了", file=sys.stderr)
 
 
-def upload(out: Path, repo_id: str | None, private: bool, message: str) -> str:
+def _token() -> str:
     token = os.environ.get("HF_TOKEN") or os.environ.get("HUGGINGFACE_TOKEN")
     if not token:
+        f = ROOT / ".hf_token"
+        if f.exists():
+            token = f.read_text(encoding="utf-8").strip()
+    if not token:
         raise SystemExit(
-            "未找到 HF_TOKEN。先创建 write token：https://huggingface.co/settings/tokens\n"
-            "然后：$env:HF_TOKEN='hf_...'; python tools\\deploy_hf.py --upload"
+            "未找到 HF token。二选一：\n"
+            "  1) hf auth login\n"
+            "  2) 把 write token 写进 .hf_token（已在 .gitignore）\n"
+            "然后：python tools\\deploy_hf.py --upload"
         )
+    return token
+
+
+def _env_value(name: str) -> str | None:
+    """先环境变量，再仓库根的 .env；只返回值，不打印。"""
+    if os.environ.get(name):
+        return os.environ[name]
+    env = ROOT / ".env"
+    if env.exists():
+        for line in env.read_text(encoding="utf-8", errors="replace").splitlines():
+            line = line.strip()
+            if line.startswith(f"{name}="):
+                return line.split("=", 1)[1].strip().strip('"').strip("'") or None
+    return None
+
+
+def upload(
+    out: Path,
+    repo_id: str | None,
+    private: bool,
+    message: str,
+    *,
+    set_secret: bool = False,
+    wait: bool = False,
+) -> str:
     from huggingface_hub import HfApi
 
-    api = HfApi(token=token)
+    api = HfApi(token=_token())
     user = api.whoami()["name"]
     repo_id = repo_id or f"{user}/research-copilot"
     api.create_repo(
@@ -110,25 +141,70 @@ def upload(out: Path, repo_id: str | None, private: bool, message: str) -> str:
         commit_message=message,
         ignore_patterns=[".git*", "**/__pycache__/**", "**/*.pyc"],
     )
+
+    if set_secret:
+        key = _env_value("DEEPSEEK_API_KEY")
+        if key:
+            api.add_space_secret(repo_id=repo_id, key="DEEPSEEK_API_KEY", value=key)
+            print("secret DEEPSEEK_API_KEY: set（值未打印）")
+        else:
+            print("! .env / 环境变量里没有 DEEPSEEK_API_KEY，跳过 Space Secret")
+
     subdomain = repo_id.replace("/", "-").replace("_", "-").lower()
     print(f"Space: https://huggingface.co/spaces/{repo_id}")
     print(f"Demo : https://{subdomain}.hf.space")
+
+    if wait:
+        _wait_running(api, repo_id)
     return repo_id
+
+
+def _wait_running(api, repo_id: str, timeout_min: int = 45) -> None:
+    import time
+
+    deadline = time.time() + timeout_min * 60
+    last = None
+    while time.time() < deadline:
+        try:
+            stage = api.get_space_runtime(repo_id).stage
+        except Exception as e:  # noqa: BLE001
+            stage = f"unknown: {e}"
+        if stage != last:
+            print(f"[build] {stage}", flush=True)
+            last = stage
+        if stage == "RUNNING":
+            print("[build] RUNNING — 可以开始验公网访问")
+            return
+        if stage in {"BUILD_ERROR", "CONFIG_ERROR", "RUNTIME_ERROR"}:
+            print(f"[build] 失败：{stage}")
+            print(f"日志：https://huggingface.co/spaces/{repo_id}/logs")
+            raise SystemExit(1)
+        time.sleep(15)
+    print("[build] 等待超时；去 Space 页面看构建日志")
 
 
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default=str(ROOT / "build" / "hf-space"))
-    ap.add_argument("--upload", action="store_true", help="上传到 HF Space（需要 HF_TOKEN）")
+    ap.add_argument("--upload", action="store_true", help="上传到 HF Space（需要 HF token）")
     ap.add_argument("--repo-id", default=None, help="默认 <你的用户名>/research-copilot")
     ap.add_argument("--private", action="store_true")
     ap.add_argument("--message", default="deploy: research copilot demo")
+    ap.add_argument("--set-secret", action="store_true", help="把 .env 的 DEEPSEEK_API_KEY 写成 Space Secret")
+    ap.add_argument("--wait", action="store_true", help="轮询构建状态直到 RUNNING")
     args = ap.parse_args()
 
     out = Path(args.out)
     stage(out)
     if args.upload:
-        upload(out, args.repo_id, args.private, args.message)
+        upload(
+            out,
+            args.repo_id,
+            args.private,
+            args.message,
+            set_secret=args.set_secret,
+            wait=args.wait,
+        )
     else:
         print("\n只生成了 staging；上传：python tools\\deploy_hf.py --upload")
     return 0

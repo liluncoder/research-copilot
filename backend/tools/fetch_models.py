@@ -58,7 +58,9 @@ def main() -> int:
     try:
         path = snapshot_download(
             "BAAI/bge-m3",
-            allow_patterns=["*.json", "*.txt", "*.model", "model.safetensors"],
+            # ★BGE-M3 官方仓库只有 pytorch_model.bin，没有 model.safetensors；
+            #   只写后者会"下载成功但没权重"，模型加载时才报错。
+            allow_patterns=["*.json", "*.txt", "*.model", "pytorch_model.bin", "model.safetensors"],
             local_dir=str(target),
             resume_download=True,
             max_workers=4,
