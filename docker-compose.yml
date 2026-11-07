@@ -1,0 +1,46 @@
+# ★必须显式写项目名：Compose 默认拿仓库目录名当项目名，
+#   而目录名「传智杯」全是非 ASCII 字符，会被剥成空串 ⇒
+#   "project name must not be empty"。写死名称后，无论谁 clone 到哪个目录都能起。
+name: research-copilot
+
+services:
+  backend:
+    build:
+      context: ./backend
+      # 依赖源可在 .env 或命令行覆盖；默认国内镜像，海外用 PIP_INDEX_URL=https://pypi.org/simple
+      args:
+        PIP_INDEX_URL: ${PIP_INDEX_URL:-https://mirrors.aliyun.com/pypi/simple/}
+    container_name: research-agent-backend
+    ports:
+      - "8000:8000"
+    env_file: .env
+    environment:
+      - UPLOAD_DIR=/app/data/uploads
+      - CHROMA_PERSIST_DIR=/app/chroma_data
+      # ★索引后端固定 numpy：镜像装了 chromadb，若走 auto 会优先打开空的
+      #   Chroma collection，而卷里的索引是 NumpyStore 写的 <doc>/vectors.npy ⇒ 检索零命中。
+      - STORE_BACKEND=numpy
+    volumes:
+      # ★挂到 backend/data/uploads：后端默认 UPLOAD_DIR=./data/uploads（相对 cwd=backend），
+      #   本地开发与容器共用同一份数据，避免"开发传的文献在 Docker 里看不见"
+      - ./backend/data/uploads:/app/data/uploads
+      - chroma_data:/app/chroma_data
+      - ./tests/fixtures:/app/tests/fixtures:ro
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmmirror.com}
+    container_name: research-agent-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  chroma_data:

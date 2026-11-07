@@ -1,0 +1,29 @@
+# Backend dependencies — generated from pyproject.toml [project.dependencies].
+# Install:  python -m pip install -r requirements.txt
+# Python 3.11+ required.
+#
+# FastAPI / server
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+pydantic-settings>=2.6.0
+python-multipart>=0.0.12
+# PDF parsing
+pymupdf>=1.24.0
+numpy>=2.0
+pillow>=10.0
+# J7 figures: CSV statistics (figures.py imports pandas directly)
+pandas>=2.2
+# J6 citation graph: PageRank / graph structure
+networkx>=3.0
+# OCR: RapidOCR (light and fast, CPU only)
+rapidocr_onnxruntime>=1.2.0
+# Memory measurement (J3)
+psutil>=6.0
+# Retrieval: Chroma store + BGE-M3 embeddings
+# NOTE: sentence-transformers pulls torch (CPU build ~200MB).
+#       The demo runs fine without BGE-M3 weights: embeddings fall back to
+#       the prebuilt numpy index, retrieval still works.
+chromadb>=0.5
+sentence-transformers>=3.0
+# Answer orchestration (plan -> retrieve -> answer -> verify)
+langgraph>=0.2

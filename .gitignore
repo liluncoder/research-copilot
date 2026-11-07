@@ -1,0 +1,106 @@
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# 环境与密钥（★只进环境变量，见 .env.example）
+# ★用 .env.* 一次兜住所有变体（.env.local / .env.bak / .env.production …）。
+#   原来只写了 .env.local 和 .env.*.local，漏掉了 .env.bak ——
+#   而"备份 .env"恰恰是密钥最容易泄露进仓库的路径。
+.env
+.env.*
+!.env.example
+# HF 部署 token（只放在本机，部署脚本读取后不打印）
+.hf_token
+# ModelScope 访问令牌（同上）
+.ms_token
+
+# 构建产物
+.next/
+out/
+dist/
+*.egg-info/
+*.tsbuildinfo
+.pytest_cache/
+.ruff_cache/
+
+# 大文件与本地数据（模型权重 / 向量库 / 上传件）
+*.bin
+*.npz
+chroma_data/
+data/uploads/
+
+# 系统杂项
+Thumbs.db
+desktop.ini
+
+# 仓库根目录的临时文件（调试日志/中间产物，一律不进仓库）
+# ★必须写成 /_* 而不是 _*：后者会把子目录里所有以下划线开头的文件一起屏蔽，
+#   包括 Python 的 __init__.py（首次踩到：backend/app/services/__init__.py 静默没进仓库）
+/_*
+*.log
+
+# J3 开发期的合成测试件（可用 tools/make_scan.py 重建，不进仓库）
+*_local.pdf
+
+# J3-b 用的 541 页合成样本（92.7 MB，超过仓库合理体积；
+#  用 backend/tools/make_big_pdf.py --pages 541 可重建）
+_synthetic_*.pdf
+
+# 判据复跑产物（每次跑都会变，不进仓库）
+tests/out/
+
+# ★运行时数据：上传件与向量库。原来只写了根目录的 data/uploads/ 和 chroma_data/，
+#   但后端从 backend/ 启动时数据落在 backend/data/ —— 实测被误提交过一次（0a9bff1be357）。
+backend/data/
+backend/chroma_data/
+
+# next 构建产物（换 distDir 时用）
+frontend/.next-build/
+.next-build/
+
+# HF Space staging（由 tools/deploy_hf.py 生成，含本地数据，不进仓库）
+build/
+_shots/
+# 本地下载的 embedding 权重（2GB+，复跑用；不进仓库）
+models/
+
+# next 构建产物与 build.py 的归档目录（.next-build-old-<时间戳>）
+frontend/.next*-old*/
+.next*-old*/
+
+# 2026-11-07: 轮换 .next 缓存时留下的备份目录（沙箱不让删，只能忽略）
+.next_stale_*/
+frontend/.next_stale_*/
+
+# 本地工作记忆与内部过程记录：只留本机，不进公开仓库（2026-11-07 定）
+.workbuddy/
+.workbuddy-ai/
+
+# 调试期残留（不是作品文件）
+killing
+press
+_shots_live/
+
+# ★只把结果公开：内部过程文档 / 判词 / 部署配置 / 制作脚本 / 无关课程图
+#   一律不进公开仓库；本地仍保留，方便本人复跑与部署（2026-11-07 定）
+deploy/
+docs/
+report/
+tools/
+路线/
+计划表.md
+图示导出/
+backend/tools/
+frontend/tools/
+data/translate/
+frontend/tsconfig.tsbuildinfo
+科研小助手Agent-AI大模型.pdf
+本地打开说明.md
+*.srt
+dist/_旧版归档/
+
+# 两份重复版本的本地语料（版本去重测试用，不进公开仓库）
+pdf/1706.03762v5.pdf
+pdf/1706.03762v6.pdf

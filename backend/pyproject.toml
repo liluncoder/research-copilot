@@ -1,0 +1,41 @@
+[project]
+name = "research-agent-backend"
+version = "0.1.0"
+description = "全流程科研助手 Agent — FastAPI 后端（LangGraph + RAG）"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "pydantic-settings>=2.6.0",
+    "python-multipart>=0.0.12",
+    # PDF 解析
+    "pymupdf>=1.24.0",
+    "numpy>=2.0",
+    "pillow>=10.0",
+    # J7 图表：CSV 统计（figures.py 直接 import pandas）
+    "pandas>=2.2",
+    # J6 引用图谱：PageRank / 图结构
+    "networkx>=3.0",
+    # OCR：RapidOCR 为主（轻、快，见 report/J3_判词.md）
+    "rapidocr_onnxruntime>=1.2.0",
+    # 内存测量（J3 判据）
+    "psutil>=6.0",
+    # S2 检索：Chroma 向量库 + BGE-M3（sentence-transformers 会带 torch）
+    # ★部署注意：torch CPU 版约 200MB、BGE-M3 权重 2.2GB，镜像会明显变大（见 路线/05 风险 R4）
+    "chromadb>=0.5",
+    "sentence-transformers>=3.0",
+    # S2 回答层编排（plan→retrieve→answer→verify）；未装时退到等价顺序执行器
+    "langgraph>=0.2",
+]
+
+[project.optional-dependencies]
+# PaddleOCR 作为兜底引擎：质量好但在 CPU 上慢 7 倍、依赖重（含 paddlepaddle 100MB+）
+# 且 PaddlePaddle 3.3.1 的 oneDNN 后端有 bug（必须 enable_mkldnn=False）
+ocr-paddle = ["paddlepaddle>=3.0", "paddleocr>=3.0"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

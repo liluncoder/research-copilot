@@ -1,0 +1,220 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * 设计基线（2026-10-18 统一）
+ *
+ * 为什么不用 shadcn 默认的纯白 + 亮蓝：
+ *  - 纯白背景看久了刺眼，且卡片与背景几乎没有分层 ⇒ 页面"糊成一片"，这是显脏的主因
+ *  - 亮蓝（221 83% 53%）是 SaaS 营销色，学术工具里显得轻浮
+ * 这里改成「暖白底 + 墨靛主色 + 青绿成功色」，靠明度差做层次，不靠加边框。
+ *
+ * 字体全部走系统栈：零网络请求（离线/Docker/HF 都能正常渲染），
+ * 中英文各用各自最优字体（中文苹方/雅黑，西文 Segoe/Inter）。
+ */
+@layer base {
+  :root {
+    /* 暖白底：比 0 0% 100% 柔和，长时间阅读不刺眼 */
+    --background: 40 33% 99%;
+    --foreground: 222 28% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 28% 12%;
+
+    /* 墨靛：学术感，用于主按钮、选中态、链接 */
+    --primary: 232 52% 40%;
+    --primary-foreground: 0 0% 100%;
+
+    /* 青绿：只给"已通过 / 成功 / 有依据"用，形成语义色 */
+    --success: 168 58% 30%;
+    --success-foreground: 0 0% 100%;
+
+    /* 琥珀：扫描件 / 置信度偏低 / 需要人看一眼的提示 */
+    --warning: 32 88% 34%;
+    --warning-foreground: 0 0% 100%;
+
+    --muted: 220 20% 96%;
+    --muted-foreground: 220 10% 42%;
+
+    --accent: 232 60% 96%;
+    --accent-foreground: 232 52% 34%;
+
+    --destructive: 356 68% 48%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 16% 91%;
+    --input: 220 16% 88%;
+    --ring: 232 52% 40%;
+
+    /* 12px：比 8px 更现代，且大圆角能弱化"边框套框"的廉价感 */
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 224 24% 8%;
+    --foreground: 210 30% 96%;
+
+    --card: 224 22% 11%;
+    --card-foreground: 210 30% 96%;
+
+    --primary: 232 58% 66%;
+    --primary-foreground: 224 30% 10%;
+
+    --success: 168 52% 52%;
+    --success-foreground: 224 30% 10%;
+
+    --warning: 36 80% 58%;
+    --warning-foreground: 224 30% 10%;
+
+    --muted: 222 18% 17%;
+    --muted-foreground: 220 12% 66%;
+
+    --accent: 232 30% 20%;
+    --accent-foreground: 232 60% 88%;
+
+    --destructive: 356 62% 56%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 222 16% 20%;
+    --input: 222 16% 24%;
+    --ring: 232 58% 66%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    /* 中文正文行高：1.5 在中文里偏挤，1.7 更适合连续阅读 */
+    line-height: 1.7;
+  }
+
+  /* 标题不要继承正文行高与字距，否则大字号显得松散 */
+  h1, h2, h3, h4 {
+    line-height: 1.3;
+    letter-spacing: -0.011em;
+  }
+
+  /* 数字一律等宽：判据表、图注、指标并排时不会左右抖动 */
+  .tabular, table, .font-mono {
+    font-variant-numeric: tabular-nums;
+  }
+
+  ::selection {
+    @apply bg-primary/15;
+  }
+
+  /* 滚动条：默认的 Windows 滚动条在白底上非常突兀 */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--border));
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--muted-foreground) / 0.45);
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+@layer components {
+  /* 顶栏：毛玻璃 + 半透明底，滚动时内容从下面透过去，比实色条有层次 */
+  .site-header {
+    @apply sticky top-0 z-40 border-b border-border/70 backdrop-blur-md;
+    background-color: hsl(var(--background) / 0.82);
+  }
+
+  /* 统一内容容器：所有页面用同一个宽度与左右留白 */
+  .container-page {
+    @apply mx-auto w-full max-w-6xl px-5 sm:px-8;
+  }
+
+  /* 卡片：细边框 + 极淡阴影。阴影只负责"浮起 1px"，不抢视线 */
+  .surface {
+    @apply rounded-xl border border-border bg-card;
+    box-shadow: 0 1px 2px hsl(222 28% 12% / 0.04), 0 1px 1px hsl(222 28% 12% / 0.02);
+  }
+
+  .surface-hover {
+    @apply transition-all duration-200;
+  }
+  .surface-hover:hover {
+    border-color: hsl(var(--primary) / 0.35);
+    box-shadow: 0 4px 16px hsl(222 28% 12% / 0.07);
+    transform: translateY(-1px);
+  }
+
+  /* 全屏工作台的二级工具条（图谱 / 阅读器）：和顶栏区分开，但不另起一套视觉 */
+  .toolbar {
+    @apply flex flex-wrap items-center gap-2.5 border-b border-border/70 bg-card/55 px-5 py-2;
+  }
+
+  /* 小节标题：左侧一条竖线，比"加粗加大"更省空间也更整齐 */
+  .section-label {
+    @apply flex items-center gap-2 text-[13px] font-semibold uppercase tracking-wider text-muted-foreground;
+  }
+  .section-label::before {
+    content: "";
+    @apply h-3.5 w-[3px] rounded-full bg-primary/70;
+  }
+
+  /* 加载中的"三个点"：等宽节奏的跳动，用于画布/列表这类会等一会儿的区域 */
+  .dots > span {
+    animation: dot-bounce 1.15s infinite ease-in-out both;
+  }
+  .dots > span:nth-child(2) {
+    animation-delay: 0.16s;
+  }
+  .dots > span:nth-child(3) {
+    animation-delay: 0.32s;
+  }
+
+  /* 问答页"思考中"的小圆点：比 .dots 更小更浅，跟在文字后面不抢戏 */
+  .thinking-dot {
+    @apply inline-block h-1 w-1 rounded-full bg-primary/70;
+    animation: dot-bounce 1.2s infinite ease-in-out both;
+  }
+}
+
+@keyframes dot-bounce {
+  0%,
+  80%,
+  100% {
+    transform: scale(0.55);
+    opacity: 0.3;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* 骨架屏的呼吸感：比纯灰块更"活"，但比 spinner 安静 */
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+.skeleton {
+  background-color: hsl(var(--muted-foreground) / 0.18);
+  animation: skeleton-pulse 1.6s ease-in-out infinite;
+}
